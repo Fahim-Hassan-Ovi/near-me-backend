@@ -8,7 +8,7 @@ let server: Server;
 
 const startServer = async () =>{
    try {
-     await mongoose.connect("mongodb://localhost:27017/tour-management-db");
+     await mongoose.connect(envVars.DB_URL);
     console.log('Server is listening');
 
     server = app.listen(envVars.PORT, ()=>{
