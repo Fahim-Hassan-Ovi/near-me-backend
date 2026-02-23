@@ -1,31 +1,35 @@
 /* eslint-disable no-console */
-import {Server} from "http";
+import { Server } from "http";
 import mongoose from 'mongoose';
 import app from './app';
 import { envVars } from "./app/config/env";
+import { seedSuperAdmin } from "./app/utils/seedSuperAdmin";
 
 let server: Server;
 
-const startServer = async () =>{
-   try {
-     await mongoose.connect(envVars.DB_URL);
-    console.log('Server is listening');
+const startServer = async () => {
+    try {
+        await mongoose.connect(envVars.DB_URL);
+        console.log('Server is listening');
 
-    server = app.listen(envVars.PORT, ()=>{
-        console.log(`Server is listening to port ${envVars.PORT}`);
-    })
-   } catch (error) {
-    console.log(error)
-   }
+        server = app.listen(envVars.PORT, () => {
+            console.log(`Server is listening to port ${envVars.PORT}`);
+        })
+    } catch (error) {
+        console.log(error)
+    }
 }
 
-startServer();
+(async () => {
+    await startServer();
+    await seedSuperAdmin();
+})()
 
-process.on("unhandledRejection", (err)=>{
+process.on("unhandledRejection", (err) => {
     console.log("Unhandled Rejection detected... Server is shutting down..", err);
 
-    if(server){
-        server.close(()=>{
+    if (server) {
+        server.close(() => {
             process.exit(1);
         })
     }
@@ -33,11 +37,11 @@ process.on("unhandledRejection", (err)=>{
     process.exit(1);
 })
 
-process.on("uncaughtException", (err)=>{
+process.on("uncaughtException", (err) => {
     console.log("Uncaught Exception detected... Server is shutting down..", err);
 
-    if(server){
-        server.close(()=>{
+    if (server) {
+        server.close(() => {
             process.exit(1);
         })
     }
@@ -45,11 +49,11 @@ process.on("uncaughtException", (err)=>{
     process.exit(1);
 })
 
-process.on("SIGTERM", ()=>{
+process.on("SIGTERM", () => {
     console.log("SIGTERM signal received... Server is shutting down..");
 
-    if(server){
-        server.close(()=>{
+    if (server) {
+        server.close(() => {
             process.exit(1);
         })
     }
@@ -62,6 +66,6 @@ process.on("SIGTERM", ()=>{
 // Promise.reject(new Error("I forgot to catch this error"))
 
 
-//For testing uncaught Exception 
+//For testing uncaught Exception
 
 // throw new Error("I forgot to handle local error");
