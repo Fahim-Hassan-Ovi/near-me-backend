@@ -6,6 +6,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { AuthServices } from "./auth.service";
 import AppError from "../../errorHelpers/AppError";
 import { setAuthCookie } from "../../utils/setCookie";
+import { JwtPayload } from "jsonwebtoken";
 
 const credentialsLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // const user = await UserServices.createUser(req.body);
@@ -84,7 +85,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response, next: NextF
 
     const newPassword = req.body.newPassword;
     const oldPassword = req.body.oldPassword;
-    const decodedToken = req.user;
+    const decodedToken = req.user as JwtPayload;
 
     await AuthServices.resetPassword(oldPassword, newPassword, decodedToken);
 
