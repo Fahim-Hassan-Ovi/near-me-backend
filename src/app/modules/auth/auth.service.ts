@@ -39,7 +39,7 @@ const credentialsLogin = async (payload: Partial<IUser>) => {
 
     // delete isUserExist.password;
 
-    const {password : pass, ...rest} = isUserExist.toObject();
+    const { password: pass, ...rest } = isUserExist.toObject();
 
     return {
         accessToken: userTokens.accessToken,
@@ -65,22 +65,24 @@ const getNewAccessToken = async (refreshToken: string) => {
         throw new AppError(httpStatus.BAD_REQUEST, "User is deleted");
     }
 
-    const IsPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
-
-    if (!IsPasswordMatched) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Password does not matched");
+    const jwtPayload = {
+        userId: isUserExist._id,
+        email: isUserExist.email,
+        role: isUserExist.role
     }
 
-    
-    const userTokens = createUserTokens(isUserExist);
+    // const accessToken = jwt.sign(jwtPayload,"secret", { expiresIn: "1d"} )
+
+    const accessToken = generateToken(jwtPayload, envVars.JWT_ACCESS_SECRET, envVars.JWT_ACCESS_EXPIRES);
 
 
-    const {password : pass, ...rest} = isUserExist.toObject();
+    // const userTokens = createUserTokens(isUserExist);
+
+
+    const { password: pass, ...rest } = isUserExist.toObject();
 
     return {
-        accessToken: userTokens.accessToken,
-        refreshToken: userTokens.refreshToken,
-        user: rest
+        accessToken
     }
 }
 
