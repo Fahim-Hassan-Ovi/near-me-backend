@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
@@ -14,7 +15,42 @@ import passport from "passport";
 const credentialsLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // const user = await UserServices.createUser(req.body);
 
-    const loginInfo = await AuthServices.credentialsLogin(req.body);
+    // const loginInfo = await AuthServices.credentialsLogin(req.body);
+
+    passport.authenticate("local", async (err: any, user: any, info: any) => { 
+        console.log(err)       
+        if(err){
+            // return new AppError(401, "Some Error");
+
+            console.log("from err", err)
+            return next(new AppError(401, err));
+            // return next(new AppError(401, "Some Error"));
+            // return next(err);
+        }
+ 
+        if(!user){
+            // return new AppError(401, info.message);
+            console.log("from !user", err)
+            return next(new AppError(401, info.message));
+        }
+
+        const userToken = await createUserTokens(user);
+
+        const { password: pass, ...rest } = user.toObject();
+
+        setAuthCookie(res, userToken)
+
+        sendResponse(res, {
+            success: true,
+            statusCode: httpStatus.OK,
+            message: "User logged in successfully",
+            data: {
+                accessToken: userToken.accessToken,
+                refreshToken: userToken.refreshToken,
+                user: rest
+            }
+        })
+    })(req, res, next)
 
     // res.cookie("accessToken", loginInfo.accessToken, {
     //     httpOnly: true,
@@ -27,15 +63,6 @@ const credentialsLogin = catchAsync(async (req: Request, res: Response, next: Ne
     // })
 
 
-    setAuthCookie(res, loginInfo)
-
-
-    sendResponse(res, {
-        success: true,
-        statusCode: httpStatus.OK,
-        message: "User logged in successfully",
-        data: loginInfo
-    })
 })
 
 const getNewAccessToken = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -100,21 +127,21 @@ const resetPassword = catchAsync(async (req: Request, res: Response, next: NextF
     })
 })
 
-const googleRegister = catchAsync(async (req: Request, res: Response, next: NextFunction) =>{
+const googleRegister = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const redirect = req.query.redirect || "/";
 
-    passport.authenticate("google", { 
-        scope: ["profile", "email"], 
+    passport.authenticate("google", {
+        scope: ["profile", "email"],
         state: redirect as string,
         prompt: 'consent select_account'
-    }) (req, res, next)
+    })(req, res, next)
 })
 
 const googleCallbackController = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
     let redirectTo = req.query.state ? req.query.state as string : "";
 
-    if(redirectTo.startsWith("/")){
+    if (redirectTo.startsWith("/")) {
         redirectTo = redirectTo.slice(1);
     }
     const user = req.user;
@@ -123,7 +150,7 @@ const googleCallbackController = catchAsync(async (req: Request, res: Response, 
     }
     const tokenInfo = await createUserTokens(user);
 
-    setAuthCookie(res,tokenInfo);
+    setAuthCookie(res, tokenInfo);
     res.redirect(`${envVars?.FRONTEND_URL}/${redirectTo}`)
 })
 
