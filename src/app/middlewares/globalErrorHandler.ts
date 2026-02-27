@@ -1,70 +1,63 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express"
 import { envVars } from "../config/env"
 import AppError from "../errorHelpers/AppError";
+import mongoose from "mongoose";
+import { TErrorSources, TGenericErrorResponse } from "../interfaces/error.types";
+import { handleDuplicateError } from "../helpers/handleDuplicateError";
+import { handleCastError } from "../helpers/handleCastError";
+import { handleZodError } from "../helpers/handleZodError";
+import { handleValidationError } from "../helpers/handleValidationError";
 
 
-export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction )=>{
 
-    console.log(err)
 
-    const errorSources: any = [];
+export const globalErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+
+    if (envVars.NODE_ENV === "development") {
+        console.log(err);
+    }
+
+    let errorSources: TErrorSources[] = [];
     let statusCode = 500;
     let message = "Something went wrong!!!";
 
     // duplicate error
-    if(err.code === 11000){
-        const matchedArray = err.message.match(/"([^"]*)"/);
-        statusCode = 400;
-        message = `${matchedArray[1]} already exists`;
+    if (err.code === 11000) {
+        const simplifiedError = handleDuplicateError(err);
+        statusCode = simplifiedError.statusCode;
+        message = simplifiedError.message;
     }
     // Object ID error / Cast Error
-    else if(err.name === "CastError"){
-        statusCode = 400;
-        message = "Invalid MongoDB ObjectID. Please provide a valid id";
+    else if (err.name === "CastError") {
+        const simplifiedError = handleCastError(err);
+        statusCode = simplifiedError.statusCode;
+        message = simplifiedError.message;
     }
 
-    else if(err.name === "ZodError"){
-        statusCode = 400;
-        message = "Zod Error";
-        const errorMessage = err.issues.forEach((issue: any)=>{
-            errorSources.push({
-                path: issue.path[0],
-                message: issue.message
-            })
-        })
-        console.log(errorMessage)
+    //  Zod Error
+    else if (err.name === "ZodError") {
+        const simplifiedError = handleZodError(err);
+        statusCode = simplifiedError.statusCode;
+        message = simplifiedError.message;
+        errorSources = simplifiedError.errorSources as TErrorSources[];
     }
-
-//     else if (err.name === "ZodError") {
-//     statusCode = 400;
-//     message = "Zod Error";
-
-//     err.issues.forEach((issue: any) => {
-//         errorSources.push({
-//             path: issue.path.join("."), 
-//             message: issue.message
-//         });
-//     });
-// }
 
     // Validation Error
-    else if(err.name === "ValidationError"){
-        statusCode = 400;
-        const errors = Object.values(err.errors);
-        errors.forEach((errorObject : any) => errorSources.push({
-            path: errorObject.path,
-            message: errorObject.message
-        }));
-        message = "Validation Error Occurs";
+    else if (err.name === "ValidationError") {
+        const simplifiedError = handleValidationError(err);
+        statusCode = simplifiedError.statusCode;
+        errorSources = simplifiedError.errorSources as TErrorSources[];
+        message = simplifiedError.message;
     }
 
-    else if(err instanceof AppError){
+    else if (err instanceof AppError) {
         statusCode = err.statusCode;
         message = err.message;
     }
-    else if (err instanceof Error){
+    else if (err instanceof Error) {
         statusCode = 500;
         message = err.message
     }
@@ -73,7 +66,7 @@ export const globalErrorHandler = (err: any, req: Request, res: Response, next: 
         success: false,
         message,
         errorSources,
-        err,
-        stack: envVars.NODE_ENV === "development"? err.stack : null
+        err: envVars.NODE_ENV === "development" ? err : null,
+        stack: envVars.NODE_ENV === "development" ? err.stack : null
     })
 }
