@@ -2,7 +2,7 @@ import { model, Schema } from "mongoose";
 import { ITour, ITourType } from "./tour.interface";
 
 const tourTypeSchema = new Schema<ITourType>({
-    name: {type: String, required: true, unique: true}
+    name: { type: String, required: true, unique: true }
 }, {
     timestamps: true
 })
@@ -11,19 +11,21 @@ export const TourType = model<ITourType>("TourType", tourTypeSchema)
 
 const tourSchema = new Schema<ITour>({
     title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, unique: true },
     description: { type: String },
     images: { type: [String], default: [] },
     location: { type: String },
     costFrom: { type: Number },
     startDate: { type: Date },
     endDate: { type: Date },
+    departureLocation: { type: String },
+    arrivalLocation: { type: String },
     included: { type: [String], default: [] },
     excluded: { type: [String], default: [] },
     amenities: { type: [String], default: [] },
     tourPlan: { type: [String], default: [] },
-    maxGuest: { Type: Number },
-    minAge: { Type: Number },
+    maxGuest: { type: Number },
+    minAge: { type: Number },
     division: {
         type: Schema.Types.ObjectId,
         ref: "Division",
@@ -36,6 +38,37 @@ const tourSchema = new Schema<ITour>({
     },
 }, {
     timestamps: true
+})
+
+tourSchema.pre("save", async function () {
+    if (this.isModified("title")) {
+        const baseSlug = this.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}`
+
+        let counter = 0;
+        while (await Tour.exists({ slug })) {
+            slug = `${slug}-${counter++}` // dhaka-division-2
+        }
+
+        this.slug = slug;
+    }
+})
+
+tourSchema.pre("findOneAndUpdate", async function () {
+    const tour = this.getUpdate() as Partial<ITour>
+    if (tour.title) {
+        const baseSlug = tour.title.toLowerCase().split(" ").join("-")
+        let slug = `${baseSlug}`
+
+        let counter = 0;
+        while (await Tour.exists({ slug })) {
+            slug = `${slug}-${counter++}` // dhaka-division-2
+        }
+
+        tour.slug = slug
+    }
+
+    this.setUpdate(tour)
 })
 
 export const Tour = model<ITour>("Tour", tourSchema);
