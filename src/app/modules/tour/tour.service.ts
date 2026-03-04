@@ -149,7 +149,7 @@ const getAllTours = async (query: Record<string, string>) => {
 
 
 //     const totalTours = await Tour.countDocuments();
-//     // const totalTours = await tours.length;
+//     // const totalQueryTours = await tours.length;
 
 
 //     const totalPage = Math.ceil(totalTours / limit);
@@ -158,6 +158,7 @@ const getAllTours = async (query: Record<string, string>) => {
 //         page : page,
 //         limit: limit,
 //         total: totalTours,
+//         totalQueryTours: totalQueryTours
 //         totalPage: totalPage
 //     }
 //     return {
