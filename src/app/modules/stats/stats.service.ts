@@ -274,7 +274,7 @@ const getBookingStats = async () => {
         totalBookingByStatusPromise,
         totalBookingByUniqueUsersPromise
     ])
-
+    console.log(totalBookingByUniqueUsers)
     return { totalBooking, totalBookingByStatus, bookingsPerTour, avgGuestCountPerBooking: avgGuestCountPerBooking[0].avgGuestCount, bookingsLast7Days, bookingsLast30Days, totalBookingByUniqueUsers }
 }
 
