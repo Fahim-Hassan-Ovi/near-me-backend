@@ -1,43 +1,47 @@
+"use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.StatsService = void 0;
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Booking } from "../booking/booking.model";
-import { PAYMENT_STATUS } from "../payment/payment.interface";
-import { Payment } from "../payment/payment.model";
-import { Tour } from "../tour/tour.model";
-import { IsActive } from "../user/user.interface";
-import { User } from "../user/user.model";
-
+const booking_model_1 = require("../booking/booking.model");
+const payment_interface_1 = require("../payment/payment.interface");
+const payment_model_1 = require("../payment/payment.model");
+const tour_model_1 = require("../tour/tour.model");
+const user_interface_1 = require("../user/user.interface");
+const user_model_1 = require("../user/user.model");
 const now = new Date();
 const sevenDaysAgo = new Date(now).setDate(now.getDate() - 7);
 const thirtyDaysAgo = new Date(now).setDate(now.getDate() - 30);
-
-const getUserStats = async () => {
-    const totalUsersPromise = User.countDocuments()
-
-    const totalActiveUsersPromise = User.countDocuments({ isActive: IsActive.ACTIVE })
-    const totalInActiveUsersPromise = User.countDocuments({ isActive: IsActive.INACTIVE })
-    const totalBlockedUsersPromise = User.countDocuments({ isActive: IsActive.BLOCKED })
-
-    const newUsersInLast7DaysPromise = User.countDocuments({
+const getUserStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalUsersPromise = user_model_1.User.countDocuments();
+    const totalActiveUsersPromise = user_model_1.User.countDocuments({ isActive: user_interface_1.IsActive.ACTIVE });
+    const totalInActiveUsersPromise = user_model_1.User.countDocuments({ isActive: user_interface_1.IsActive.INACTIVE });
+    const totalBlockedUsersPromise = user_model_1.User.countDocuments({ isActive: user_interface_1.IsActive.BLOCKED });
+    const newUsersInLast7DaysPromise = user_model_1.User.countDocuments({
         createdAt: { $gte: sevenDaysAgo }
-    })
-    const newUsersInLast30DaysPromise = User.countDocuments({
+    });
+    const newUsersInLast30DaysPromise = user_model_1.User.countDocuments({
         createdAt: { $gte: thirtyDaysAgo }
-    })
-
-    const usersByRolePromise = User.aggregate([
+    });
+    const usersByRolePromise = user_model_1.User.aggregate([
         //stage -1 : Grouping users by role and count total users in each role
-
         {
             $group: {
                 _id: "$role",
                 count: { $sum: 1 }
             }
         }
-    ])
-
-
-    const [totalUsers, totalActiveUsers, totalInActiveUsers, totalBlockedUsers, newUsersInLast7Days, newUsersInLast30Days, usersByRole] = await Promise.all([
+    ]);
+    const [totalUsers, totalActiveUsers, totalInActiveUsers, totalBlockedUsers, newUsersInLast7Days, newUsersInLast30Days, usersByRole] = yield Promise.all([
         totalUsersPromise,
         totalActiveUsersPromise,
         totalInActiveUsersPromise,
@@ -45,7 +49,7 @@ const getUserStats = async () => {
         newUsersInLast7DaysPromise,
         newUsersInLast30DaysPromise,
         usersByRolePromise
-    ])
+    ]);
     return {
         totalUsers,
         totalActiveUsers,
@@ -54,13 +58,11 @@ const getUserStats = async () => {
         newUsersInLast7Days,
         newUsersInLast30Days,
         usersByRole
-    }
-}
-
-const getTourStats = async () => {
-    const totalTourPromise = Tour.countDocuments();
-
-    const totalTourByTourTypePromise = Tour.aggregate([
+    };
+});
+const getTourStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalTourPromise = tour_model_1.Tour.countDocuments();
+    const totalTourByTourTypePromise = tour_model_1.Tour.aggregate([
         // stage-1 : connect Tour Type model - lookup stage
         {
             $lookup: {
@@ -71,11 +73,9 @@ const getTourStats = async () => {
             }
         },
         //stage - 2 : unwind the array to object
-
         {
             $unwind: "$type"
         },
-
         //stage - 3 : grouping tour type
         {
             $group: {
@@ -83,9 +83,8 @@ const getTourStats = async () => {
                 count: { $sum: 1 }
             }
         }
-    ])
-
-    const avgTourCostPromise = Tour.aggregate([
+    ]);
+    const avgTourCostPromise = tour_model_1.Tour.aggregate([
         //Stage-1 : group the cost from, do sum, and average the sum
         {
             $group: {
@@ -93,9 +92,8 @@ const getTourStats = async () => {
                 avgCostFrom: { $avg: "$costFrom" }
             }
         }
-    ])
-
-    const totalTourByDivisionPromise = Tour.aggregate([
+    ]);
+    const totalTourByDivisionPromise = tour_model_1.Tour.aggregate([
         // stage-1 : connect Division model - lookup stage
         {
             $lookup: {
@@ -106,11 +104,9 @@ const getTourStats = async () => {
             }
         },
         //stage - 2 : unwind the array to object
-
         {
             $unwind: "$division"
         },
-
         //stage - 3 : grouping tour type
         {
             $group: {
@@ -118,9 +114,8 @@ const getTourStats = async () => {
                 count: { $sum: 1 }
             }
         }
-    ])
-
-    const totalHighestBookedTourPromise = Booking.aggregate([
+    ]);
+    const totalHighestBookedTourPromise = booking_model_1.Booking.aggregate([
         // stage-1 : Group the tour
         {
             $group: {
@@ -128,18 +123,14 @@ const getTourStats = async () => {
                 bookingCount: { $sum: 1 }
             }
         },
-
         //stage-2 : sort the tour
-
         {
             $sort: { bookingCount: -1 }
         },
-
         //stage-3 : sort
         {
             $limit: 5
         },
-
         //stage-4 lookup stage
         {
             $lookup: {
@@ -157,9 +148,7 @@ const getTourStats = async () => {
         },
         //stage-5 unwind stage
         { $unwind: "$tour" },
-
         //stage-6 Project stage
-
         {
             $project: {
                 bookingCount: 1,
@@ -167,29 +156,25 @@ const getTourStats = async () => {
                 "tour.slug": 1
             }
         }
-    ])
-
-    const [totalTour, totalTourByTourType, avgTourCost, totalTourByDivision, totalHighestBookedTour] = await Promise.all([
+    ]);
+    const [totalTour, totalTourByTourType, avgTourCost, totalTourByDivision, totalHighestBookedTour] = yield Promise.all([
         totalTourPromise,
         totalTourByTourTypePromise,
         avgTourCostPromise,
         totalTourByDivisionPromise,
         totalHighestBookedTourPromise
-    ])
-
+    ]);
     return {
         totalTour,
         totalTourByTourType,
         avgTourCost,
         totalTourByDivision,
         totalHighestBookedTour
-    }
-}
-
-const getBookingStats = async () => {
-    const totalBookingPromise = Booking.countDocuments()
-
-    const totalBookingByStatusPromise = Booking.aggregate([
+    };
+});
+const getBookingStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalBookingPromise = booking_model_1.Booking.countDocuments();
+    const totalBookingByStatusPromise = booking_model_1.Booking.aggregate([
         //stage-1 group stage
         {
             $group: {
@@ -197,28 +182,23 @@ const getBookingStats = async () => {
                 count: { $sum: 1 }
             }
         }
-    ])
-
-    const bookingsPerTourPromise = Booking.aggregate([
+    ]);
+    const bookingsPerTourPromise = booking_model_1.Booking.aggregate([
         //stage1 group stage
-
         {
             $group: {
                 _id: "$tour",
                 bookingCount: { $sum: 1 }
             }
         },
-
         //stage-2 sort stage
         {
             $sort: { bookingCount: -1 }
         },
-
         //stage-3 limit stage
         {
             $limit: 10
         },
-
         //stage-4 lookup stage
         {
             $lookup: {
@@ -228,14 +208,11 @@ const getBookingStats = async () => {
                 as: "tour"
             }
         },
-
         // stage5 - unwind stage
         {
             $unwind: "$tour"
         },
-
         // stage6 project stage
-
         {
             $project: {
                 bookingCount: 1,
@@ -244,9 +221,8 @@ const getBookingStats = async () => {
                 "tour.slug": 1
             }
         }
-    ])
-
-    const avgGuestCountPerBookingPromise = Booking.aggregate([
+    ]);
+    const avgGuestCountPerBookingPromise = booking_model_1.Booking.aggregate([
         // stage 1  - group stage
         {
             $group: {
@@ -254,18 +230,15 @@ const getBookingStats = async () => {
                 avgGuestCount: { $avg: "$guestCount" }
             }
         }
-    ])
-
-    const bookingsLast7DaysPromise = Booking.countDocuments({
+    ]);
+    const bookingsLast7DaysPromise = booking_model_1.Booking.countDocuments({
         createdAt: { $gte: sevenDaysAgo }
-    })
-    const bookingsLast30DaysPromise = Booking.countDocuments({
+    });
+    const bookingsLast30DaysPromise = booking_model_1.Booking.countDocuments({
         createdAt: { $gte: thirtyDaysAgo }
-    })
-
-    const totalBookingByUniqueUsersPromise = Booking.distinct("user").then((user: any) => user.length)
-
-    const [totalBooking, totalBookingByStatus, bookingsPerTour, avgGuestCountPerBooking, bookingsLast7Days, bookingsLast30Days, totalBookingByUniqueUsers] = await Promise.all([
+    });
+    const totalBookingByUniqueUsersPromise = booking_model_1.Booking.distinct("user").then((user) => user.length);
+    const [totalBooking, totalBookingByStatus, bookingsPerTour, avgGuestCountPerBooking, bookingsLast7Days, bookingsLast30Days, totalBookingByUniqueUsers] = yield Promise.all([
         totalBookingPromise,
         totalBookingByStatusPromise,
         bookingsPerTourPromise,
@@ -274,16 +247,13 @@ const getBookingStats = async () => {
         bookingsLast30DaysPromise,
         totalBookingByStatusPromise,
         totalBookingByUniqueUsersPromise
-    ])
-    console.log(totalBookingByUniqueUsers)
-    return { totalBooking, totalBookingByStatus, bookingsPerTour, avgGuestCountPerBooking: avgGuestCountPerBooking[0].avgGuestCount, bookingsLast7Days, bookingsLast30Days, totalBookingByUniqueUsers }
-}
-
-const getPaymentStats = async () => {
-
-    const totalPaymentPromise = Payment.countDocuments();
-
-    const totalPaymentByStatusPromise = Payment.aggregate([
+    ]);
+    console.log(totalBookingByUniqueUsers);
+    return { totalBooking, totalBookingByStatus, bookingsPerTour, avgGuestCountPerBooking: avgGuestCountPerBooking[0].avgGuestCount, bookingsLast7Days, bookingsLast30Days, totalBookingByUniqueUsers };
+});
+const getPaymentStats = () => __awaiter(void 0, void 0, void 0, function* () {
+    const totalPaymentPromise = payment_model_1.Payment.countDocuments();
+    const totalPaymentByStatusPromise = payment_model_1.Payment.aggregate([
         //stage 1 group
         {
             $group: {
@@ -291,12 +261,11 @@ const getPaymentStats = async () => {
                 count: { $sum: 1 }
             }
         }
-    ])
-
-    const totalRevenuePromise = Payment.aggregate([
+    ]);
+    const totalRevenuePromise = payment_model_1.Payment.aggregate([
         //stage1 match stage
         {
-            $match: { status: PAYMENT_STATUS.PAID }
+            $match: { status: payment_interface_1.PAYMENT_STATUS.PAID }
         },
         {
             $group: {
@@ -304,9 +273,8 @@ const getPaymentStats = async () => {
                 totalRevenue: { $sum: "$amount" }
             }
         }
-    ])
-
-    const avgPaymentAmountPromise = Payment.aggregate([
+    ]);
+    const avgPaymentAmountPromise = payment_model_1.Payment.aggregate([
         //stage 1 group stage
         {
             $group: {
@@ -314,9 +282,8 @@ const getPaymentStats = async () => {
                 avgPaymentAMount: { $avg: "$amount" }
             }
         }
-    ])
-
-    const paymentGatewayDataPromise = Payment.aggregate([
+    ]);
+    const paymentGatewayDataPromise = payment_model_1.Payment.aggregate([
         //stage 1 group stage
         {
             $group: {
@@ -324,22 +291,16 @@ const getPaymentStats = async () => {
                 count: { $sum: 1 }
             }
         }
-    ])
-
-
-
-    const [totalPayment, totalPaymentByStatus, totalRevenue, avgPaymentAmount, paymentGatewayData] = await Promise.all([
+    ]);
+    const [totalPayment, totalPaymentByStatus, totalRevenue, avgPaymentAmount, paymentGatewayData] = yield Promise.all([
         totalPaymentPromise,
         totalPaymentByStatusPromise,
         totalRevenuePromise,
         avgPaymentAmountPromise,
         paymentGatewayDataPromise
-
-    ])
-    return { totalPayment, totalPaymentByStatus, totalRevenue, avgPaymentAmount, paymentGatewayData }
-}
-
-
+    ]);
+    return { totalPayment, totalPaymentByStatus, totalRevenue, avgPaymentAmount, paymentGatewayData };
+});
 /**
  * await Tour.updateMany(
         {
@@ -359,12 +320,9 @@ const getPaymentStats = async () => {
         ]
     );
  */
-
-
-
-export const StatsService = {
+exports.StatsService = {
     getBookingStats,
     getPaymentStats,
     getTourStats,
     getUserStats
-}
+};

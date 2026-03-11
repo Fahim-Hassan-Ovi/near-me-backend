@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-console */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status-codes";
 import { UserServices } from "./user.service";
@@ -80,13 +78,33 @@ const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunc
 //     }
 // }
 
-const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const result = await UserServices.getAllUsers();
+// from me
+// const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+//     const result = await UserServices.getAllUsers();
 
+//     sendResponse(res, {
+//         success: true,
+//         statusCode: httpStatus.CREATED,
+//         message: "All users retrieved successfully",
+//         data: result.data,
+//         meta: result.meta
+//     })
+// })
+
+// from ph
+const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const query = req.query;
+    const result = await UserServices.getAllUsers(query as Record<string, string>);
+
+    // res.status(httpStatus.OK).json({
+    //     success: true,
+    //     message: "All Users Retrieved Successfully",
+    //     data: users
+    // })
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
-        message: "All users retrieved successfully",
+        message: "All Users Retrieved Successfully",
         data: result.data,
         meta: result.meta
     })
