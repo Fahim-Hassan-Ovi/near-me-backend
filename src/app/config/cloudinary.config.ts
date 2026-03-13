@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Frontend -> Form Data with Image File -> Multer -> Form data -> Req (Body + File)
