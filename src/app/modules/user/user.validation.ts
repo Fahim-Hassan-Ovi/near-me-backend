@@ -6,23 +6,15 @@ export const createUserZodSchema = z.object({
         .min(1, { message: "Name is required" })
         .min(2, { message: "Name is too short. Minimum 2 character long" })
         .max(50, { message: "Name is too long" }),
-    // name: z.object({
-    //     firstName: z.string()
-    //         .min(1, { message: "Name is required" })
-    //         .min(2, { message: "Name is too short. Minimum 2 character long" })
-    //         .max(50, { message: "Name is too long" }),
-    //     lastName: z.object({
-    //         nickName: z.string()
-    //             .min(1, { message: "Name is required" })
-    //             .min(2, { message: "Name is too short. Minimum 2 character long" })
-    //             .max(50, { message: "Name is too long" }),
-
-    //         surName: z.string()
-    //             .min(1, { message: "Name is required" })
-    //             .min(2, { message: "Name is too short. Minimum 2 character long" })
-    //             .max(50, { message: "Name is too long" }),
-    //     })
-    // }),
+    password: z.string()
+        .min(1, { message: "Password is required" })
+        .min(8, { message: "Password must be at least 8 characters long" })
+        .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+        .regex(/\d/, { message: "Password must contain at least one digit" })
+        .regex(/[^A-Za-z0-9]/, {
+            message: "Password must contain at least one special character",
+        })
+        .optional(),
     email: z.string()
         .email({ message: "Invalid email address" })
         .min(5, { message: "Email must be at least 5 characters long" })
@@ -34,7 +26,7 @@ export const createUserZodSchema = z.object({
         })
         .optional(),
     role: z
-        // .enum(["ADMIN", "GUIDE", "USER", "SUPER_ADMIN"])
+        // .enum(["PROVIDER", "USER", "SUPER_ADMIN"])
         .enum(Object.values(Role) as [string])
         .optional(),
     isActive: z

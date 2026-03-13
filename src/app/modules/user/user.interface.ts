@@ -1,10 +1,9 @@
 import { Types } from "mongoose";
 
 export enum Role {
-    SUPER_ADMIN = "SUPER_ADMIN",
-    ADMIN = "ADMIN",
     USER = "USER",
-    GUIDE = "GUIDE"
+    PROVIDER = "PROVIDER",
+    SUPER_ADMIN = "SUPER_ADMIN"
 }
 
 export enum IsActive {
@@ -14,7 +13,7 @@ export enum IsActive {
 }
 
 export interface IAuthProvider {
-    provider: "google" | "credentials";
+    provider: "google" | "credentials" | "apple";
     providerId: string;
 }
 
