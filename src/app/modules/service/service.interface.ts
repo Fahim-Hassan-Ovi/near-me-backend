@@ -9,7 +9,7 @@ export interface ILocation {
 export interface IService {
     id?: Types.ObjectId;
     service_name?: string;
-    service_category?: string;
+    service_category?: Types.ObjectId;
     offer_services?: string[];
     phone?: number;
     service_address?: string;
