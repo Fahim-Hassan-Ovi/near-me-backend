@@ -62,13 +62,15 @@ export const createServiceZodSchema = z.object({
     location: locationZodSchema,
 
     media: z
-        .array(z.string().url({ message: "Each media must be a valid URL" }))
-        .max(6, { message: "Maximum 6 images allowed" })
+        .array(z.string())
+        // .max(6, { message: "Maximum 6 images allowed" })
         .optional(),
 
     company_logo: z
         .string()
-        .url({ message: "Company logo must be a valid URL" }),
+        .optional()
+        // .url({ message: "Company logo must be a valid URL" })
+        ,
 
     openingTime: z
         .string()
@@ -127,12 +129,11 @@ export const updateServiceZodSchema = z.object({
     location: locationZodSchema.optional(),
 
     media: z
-        .array(z.string().url())
+        .array(z.string())
         .optional(),
 
     company_logo: z
         .string()
-        .url()
         .optional(),
 
     openingTime: z

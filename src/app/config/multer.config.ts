@@ -1,32 +1,72 @@
+/* eslint-disable no-useless-escape */
 import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import { cloudinaryUpload } from "./cloudinary.config";
 
 
 const storage = new CloudinaryStorage({
-    cloudinary: cloudinaryUpload,
-    params: {
-        public_id: (req, file) => {
-            // My Special.Image#!@.png => 4545adsfsadf-45324263452-my-image.png
-            // My Special.Image#!@.png => [My Special, Image#!@, png]
+  cloudinary: cloudinaryUpload,
+  params: async (req, file) => {
 
-            const fileName = file.originalname
-                .toLowerCase()
-                .replace(/\s+/g, "-") // empty space remove replace with dash
-                .replace(/\./g, "-")
-                // eslint-disable-next-line no-useless-escape
-                .replace(/[^a-z0-9\-\.]/g, "") // non alpha numeric - !@#$
+    // 🔥 VALIDATION START
 
-            const extension = file.originalname.split(".").pop()
+    // File size validation handled by multer (we'll add below)
 
-            // binary -> 0,1 hexa decimal -> 0-9 A-F base 36 -> 0-9 a-z
-            // 0.2312345121 -> "0.hedfa674338sasfamx" -> 
-            //452384772534
-            const uniqueFileName = Math.random().toString(36).substring(2) + "-" + Date.now() + "-" + fileName + "." + extension
+    // Validate file type
+    if (file.fieldname === "company_logo") {
+      const allowedLogoTypes = ["image/png", "image/jpeg", "image/jpg"];
 
-            return uniqueFileName
-        }
+      if (!allowedLogoTypes.includes(file.mimetype)) {
+        throw new Error("Company logo must be PNG or JPEG");
+      }
     }
-})
 
-export const multerUpload = multer({ storage: storage })
+    if (file.fieldname === "media") {
+      const allowedMediaTypes = ["image/png", "image/jpeg", "image/jpg"];
+
+      if (!allowedMediaTypes.includes(file.mimetype)) {
+        throw new Error("Media must be image files only");
+      }
+    }
+
+    // 🔥 VALIDATION END
+
+    return {
+      public_id: generateFileName(file),
+
+      // optional but recommended 👇
+      folder:
+        file.fieldname === "company_logo"
+          ? "service/logo"
+          : "service/media",
+    };
+  },
+});
+
+const generateFileName = (file: Express.Multer.File) => {
+  const fileName = file.originalname
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/\./g, "-")
+    .replace(/[^a-z0-9\-\.]/g, "");
+
+  const extension = file.originalname.split(".").pop();
+
+  const uniqueFileName =
+    Math.random().toString(36).substring(2) +
+    "-" +
+    Date.now() +
+    "-" +
+    fileName +
+    "." +
+    extension;
+
+  return uniqueFileName;
+};
+
+export const multerUpload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB
+  },
+});
