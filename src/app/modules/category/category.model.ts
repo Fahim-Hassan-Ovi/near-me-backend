@@ -1,24 +1,30 @@
 import { Schema, model } from "mongoose";
-import { CategoryStatus, ICategory } from "./category.interface";
+import { ICategory } from "./category.interface";
 
 const categorySchema = new Schema<ICategory>(
   {
-    name: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
+    name: { type: String, required: true },
 
-    createdBy: {
+    parent: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Category",
+      default: null,
     },
 
-    status: {
-      type: String,
-      enum: Object.values(CategoryStatus),
-      default: CategoryStatus.APPROVED,
+    level: {
+      type: Number,
+      enum: [0, 1, 2],
+      required: true,
+    },
+
+    isCustom: {
+      type: Boolean,
+      default: false,
+    },
+
+    isApproved: {
+      type: Boolean,
+      default: true, // admin created = auto approved
     },
   },
   { timestamps: true }
