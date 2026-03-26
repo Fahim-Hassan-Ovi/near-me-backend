@@ -2,17 +2,26 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import { router } from './app/routes';
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
+import http from 'http';
 import notFound from './app/middlewares/notFound';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import "./app/config/passport";
 import expressSession from 'express-session';
 import { envVars } from './app/config/env';
+import { initSocket } from './app/socket';
 
 const app = express();
 
+const server = http.createServer(app);
+
+// Init Socket connection
+initSocket(server);
+
+app.set('trust proxy', 1);
+
 app.use(expressSession({
-    secret: "Your secret",
+    secret: envVars.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: false
 }));
@@ -39,4 +48,4 @@ app.use(globalErrorHandler);
 
 app.use(notFound);
 
-export default app;
+export default server;

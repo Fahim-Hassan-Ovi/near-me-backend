@@ -42,19 +42,19 @@ const getCategoryTree = async () => {
 
   const map = new Map();
 
-  categories.forEach((cat: any) => {
-    map.set(cat._id.toString(), { ...cat, children: [] });
+  categories.forEach((category: any) => {
+    map.set(category._id.toString(), { ...category, children: [] });
   });
 
   const tree: any[] = [];
 
-  categories.forEach((cat: any) => {
-    if (cat.parent) {
-      map.get(cat.parent.toString())?.children.push(
-        map.get(cat._id.toString())
+  categories.forEach((category: any) => {
+    if (category.parent) {
+      map.get(category.parent.toString())?.children.push(
+        map.get(category._id.toString())
       );
     } else {
-      tree.push(map.get(cat._id.toString()));
+      tree.push(map.get(category._id.toString()));
     }
   });
 

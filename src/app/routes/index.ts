@@ -6,6 +6,7 @@ import { HighlightServiceRoutes } from "../modules/highlight_service/highlight_s
 import { ServiceRoutes } from "../modules/service/service.route"
 import { ReviewRoutes } from "../modules/review/review.route"
 import { CategoryRoutes } from "../modules/category/category.route"
+import { MessageRouter } from "../modules/message/message.route"
 
 
 export const router = Router()
@@ -38,6 +39,10 @@ const moduleRoutes = [
     {
         path: "/category",
         route: CategoryRoutes
+    },
+    {
+        path: "/message",
+        route: MessageRouter
     }
 
 ]
