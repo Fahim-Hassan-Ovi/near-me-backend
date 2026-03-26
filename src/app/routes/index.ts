@@ -6,7 +6,8 @@ import { HighlightServiceRoutes } from "../modules/highlight_service/highlight_s
 import { ServiceRoutes } from "../modules/service/service.route"
 import { ReviewRoutes } from "../modules/review/review.route"
 import { CategoryRoutes } from "../modules/category/category.route"
-import { MessageRouter } from "../modules/message/message.route"
+import { MessageRoutes } from "../modules/message/message.route"
+import { StaticPageRoutes } from "../modules/static_pages/static_pages.route"
 
 
 export const router = Router()
@@ -42,7 +43,11 @@ const moduleRoutes = [
     },
     {
         path: "/message",
-        route: MessageRouter
+        route: MessageRoutes
+    },
+    {
+        path: "/static-pages",
+        route: StaticPageRoutes
     }
 
 ]

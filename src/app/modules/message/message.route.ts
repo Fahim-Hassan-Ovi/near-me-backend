@@ -39,4 +39,4 @@ router.patch(
   messageControllers.markMessagesAsSeen
 );
 
-export const MessageRouter = router;
+export const MessageRoutes = router;
