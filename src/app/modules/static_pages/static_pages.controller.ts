@@ -41,6 +41,7 @@ const updateAboutUs = catchAsync(async (req: Request, res: Response) => {
 /* ---------------- CONTACT US ---------------- */
 const createContactUs = catchAsync(async (req: Request, res: Response) => {
   const result = await StaticPageService.createContactUs(req.body);
+  // console.log("i am from controller", req.body)
 
   sendResponse(res, {
     statusCode: 201,
