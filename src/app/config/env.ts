@@ -47,6 +47,17 @@ interface EnvConfig {
     REDIS_PORT: string;
     REDIS_USERNAME: string;
     REDIS_PASSWORD: string;
+    TYPE: string;
+    PROJECT_ID: string;
+    PRIVATE_KEY_ID: string;
+    PRIVATE_KEY: string;
+    CLIENT_EMAIL: string;
+    CLIENT_ID: string;
+    AUTH_URI: string;
+    TOKEN_URI: string;
+    AUTH_PROVIDER_X509_CERT_URL: string;
+    CLIENT_X509_CERT_URL: string;
+    UNIVERSE_DOMAIN: string;
 
 
 }
@@ -74,6 +85,17 @@ const loadEnvVariables = (): EnvConfig => {
         "REDIS_PORT",
         "REDIS_USERNAME",
         "REDIS_PASSWORD",
+        'TYPE',
+        'PROJECT_ID',
+        'PRIVATE_KEY_ID',
+        'PRIVATE_KEY',
+        'CLIENT_EMAIL',
+        'CLIENT_ID',
+        'AUTH_URI',
+        'TOKEN_URI',
+        'AUTH_PROVIDER_X509_CERT_URL',
+        'CLIENT_X509_CERT_URL',
+        'UNIVERSE_DOMAIN'
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -110,7 +132,7 @@ const loadEnvVariables = (): EnvConfig => {
             SSL_SUCCESS_BACKEND_URL: process.env.SSL_SUCCESS_BACKEND_URL as string,
             SSL_FAIL_BACKEND_URL: process.env.SSL_FAIL_BACKEND_URL as string,
             SSL_CANCEL_BACKEND_URL: process.env.SSL_CANCEL_BACKEND_URL as string,
-            SSL_IPN_URL : process.env.SSL_IPN_URL as string
+            SSL_IPN_URL: process.env.SSL_IPN_URL as string
         },
         CLOUDINARY: {
             CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME as string,
@@ -128,6 +150,18 @@ const loadEnvVariables = (): EnvConfig => {
         REDIS_PORT: process.env.REDIS_PORT as string,
         REDIS_USERNAME: process.env.REDIS_USERNAME as string,
         REDIS_PASSWORD: process.env.REDIS_PASSWORD as string,
+        TYPE: process.env.TYPE as string,
+        PROJECT_ID: process.env.PROJECT_ID as string,
+        PRIVATE_KEY_ID: process.env.PRIVATE_KEY_ID as string,
+        PRIVATE_KEY: process.env.PRIVATE_KEY as string,
+        CLIENT_EMAIL: process.env.CLIENT_EMAIL as string,
+        CLIENT_ID: process.env.CLIENT_ID as string,
+        AUTH_URI: process.env.AUTH_URI as string,
+        TOKEN_URI: process.env.TOKEN_URI as string,
+        AUTH_PROVIDER_X509_CERT_URL: process.env
+            .AUTH_PROVIDER_X509_CERT_URL as string,
+        CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL as string,
+        UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string
 
     }
 }

@@ -19,7 +19,11 @@ const locationSchema = new Schema<ILocation>({
 
 const serviceSchema = new Schema<IService>({
     service_name: { type: String, required: true },
-    service_category: { type: String, required: true },
+    service_category: {
+        type: Schema.Types.ObjectId,
+        ref: "Category",
+        required: true
+    },
     offer_services: { type: [String], required: true, default: [] },
     phone: { type: Number, required: true },
     service_address: { type: String, required: true },
