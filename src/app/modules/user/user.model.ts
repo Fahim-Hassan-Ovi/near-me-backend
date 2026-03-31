@@ -27,6 +27,11 @@ const userSchema = new Schema<IUser>({
     },
     isVerified: { type: Boolean, default: false },
     auths: [authProviderSchema],
+    fcmToken: { type: String },
+    coord: {
+      type: { lat: { type: Number }, long: { type: Number } },
+      _id: false,
+    },
 }, {
     timestamps: true,
     versionKey: false

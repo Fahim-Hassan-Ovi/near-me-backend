@@ -17,6 +17,11 @@ export interface IAuthProvider {
     providerId: string;
 }
 
+export interface ICoord {
+  lat: number;
+  long: number;
+}
+
 export interface IUser {
     _id?: Types.ObjectId;
     name: string;
@@ -32,4 +37,6 @@ export interface IUser {
     reviews ?: Types.ObjectId[];
     chats ?: Types.ObjectId[];
     createdAt?: Date;
+    fcmToken?: string;
+    coord?: ICoord;
 }
