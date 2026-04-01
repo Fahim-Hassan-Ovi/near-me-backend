@@ -43,7 +43,7 @@ const updateNotificationPreferences = catchAsync(async (req, res) => {
 const getUserNotifications = catchAsync(async (req, res) => {
   const { userId } = req.user as JwtPayload;
   const query = req.query as Record<string, string>;
-  const result = await NotificationService.getusersNotificationService(
+  const result = await NotificationService.getUsersNotificationService(
     userId,
     query
   );

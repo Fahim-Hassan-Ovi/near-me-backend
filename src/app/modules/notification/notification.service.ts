@@ -46,7 +46,7 @@ const updateNotificationPreferences = async (
 };
 
 // Get user's notification
-const getusersNotificationService = async (
+const getUsersNotificationService = async (
   userId: string,
   query: Record<string, string>
 ) => {
@@ -88,6 +88,6 @@ const sendSystemNotificationService = async (payload: INotification) => {
 export const NotificationService = {
   getUserNotificationPreferences,
   updateNotificationPreferences,
-  getusersNotificationService,
+  getUsersNotificationService,
   sendSystemNotificationService,
 };

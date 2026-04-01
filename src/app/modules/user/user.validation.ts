@@ -47,6 +47,13 @@ export const createUserZodSchema = z.object({
     address: z.string()
         .min(1, { message: "Address is required" })
         .max(200, { message: "Address cannot exceed 200 characters." })
+        .optional(),
+    fcmToken: z.string('FCM token must be in string type!').optional(),
+    coord: z
+        .object({
+            lat: z.number(),
+            long: z.number(),
+        })
         .optional()
 
 })

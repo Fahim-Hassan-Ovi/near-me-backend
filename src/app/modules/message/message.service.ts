@@ -7,6 +7,9 @@ import { MessageStatus } from './message.interface';
 import { onlineUsers, io } from '../../socket';
 import { deleteImageFromCLoudinary } from '../../config/cloudinary.config';
 import { User } from '../user/user.model';
+import { sendPersonalNotification } from '../../utils/notificationSendHelper/user.notification.utils';
+import { sendPushAndSave } from '../../utils/notificationSendHelper/push.notification.utils';
+import { NotificationType } from '../notification/notification.interface';
 
 // SEND DIRECT MESSAGE (1-to-1)
 const sendDirectMessageService = async (
@@ -56,7 +59,7 @@ const sendDirectMessageService = async (
     status: MessageStatus.SENT,
     replyTo: payload.replyTo,
   });
-
+  
   io.to(onlineUsers[receiverId]).emit('direct_message', message);
 
   // Populate sender and replyTo details
@@ -64,6 +67,25 @@ const sendDirectMessageService = async (
     { path: 'sender', select: 'name picture' },
     { path: 'replyTo', select: 'message sender' },
   ]);
+
+  const notificationPayload = {
+    user: new Types.ObjectId(receiverId),
+    type: NotificationType.CHAT,
+    title: 'New Message',
+    description: `${sender.name} sent you a message`,
+    data: {
+      senderId: sender?._id.toString(),
+      message: message.message.text || message.message.image,
+      image: sender?.picture,
+    },
+  };
+
+  // Send real-time notification via socket if receiver is online
+  if (onlineUsers[receiverId]) {
+    await sendPersonalNotification(notificationPayload);
+  } else {
+    await sendPushAndSave(notificationPayload);
+  }
 
   return message;
 };
