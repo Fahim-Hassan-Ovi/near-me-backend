@@ -2,9 +2,9 @@ import { model, Schema } from "mongoose";
 import { IAuthProvider, IsActive, IUser, Role } from "./user.interface";
 
 const authProviderSchema = new Schema<IAuthProvider>({
-    provider: {type: String, required: true},
-    providerId: {type: String, required: true}
-},{
+    provider: { type: String, required: true },
+    providerId: { type: String, required: true }
+}, {
     versionKey: false,
     _id: false
 })
@@ -29,8 +29,37 @@ const userSchema = new Schema<IUser>({
     auths: [authProviderSchema],
     fcmToken: { type: String },
     coord: {
-      type: { lat: { type: Number }, long: { type: Number } },
-      _id: false,
+        type: { lat: { type: Number }, long: { type: Number } },
+        _id: false,
+    },
+    subscriptionInfo: {
+        planName: {
+            type: String,
+            enum: ["free", "basic", "pro", "elite"],
+            default: "free",
+        },
+        badgeType: {
+            type: String,
+            enum: ["none", "active", "verified_pro", "elite"],
+            default: "none",
+        },
+        priorityScore: {
+            type: Number,
+            default: 0,
+        },
+        isFeatured: {
+            type: Boolean,
+            default: false,
+        },
+        analyticsType: {
+            type: String,
+            enum: ["none", "basic", "detailed"],
+            default: "none",
+        },
+        hasHighlightedProfileBorder: {
+            type: Boolean,
+            default: false,
+        },
     },
 }, {
     timestamps: true,
