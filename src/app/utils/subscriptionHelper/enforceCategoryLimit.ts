@@ -4,18 +4,18 @@ import AppError from "../../errorHelpers/AppError";
 import { getEffectivePlan } from "./getEffectivePlan";
 
 
-export const enforcePhotoLimit = async (
+export const enforceCategoryLimit = async (
   userId: string,
-  currentPhotoCount: number,
-  newPhotosCount = 1
+  currentCategoryCount: number,
+  newCategoryCount = 1
 ) => {
   const plan: any = await getEffectivePlan(userId);
-  const limit = plan.features.maxPhotos;
+  const limit = plan.features.maxServiceCategories;
 
-  if (limit !== -1 && currentPhotoCount + newPhotosCount > limit) {
+  if (limit !== -1 && currentCategoryCount + newCategoryCount > limit) {
     throw new AppError(
       httpStatus.FORBIDDEN,
-      `Your current plan allows maximum ${limit} photos`
+      `Your current plan allows maximum ${limit} categories/services`
     );
   }
 };
