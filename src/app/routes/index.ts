@@ -8,6 +8,8 @@ import { ReviewRoutes } from "../modules/review/review.route"
 import { CategoryRoutes } from "../modules/category/category.route"
 import { MessageRoutes } from "../modules/message/message.route"
 import { StaticPageRoutes } from "../modules/static_pages/static_pages.route"
+import { PlanRoutes } from "../modules/plan/plan.route"
+import { SubscriptionRoutes } from "../modules/subscription/subscription.route"
 
 
 export const router = Router()
@@ -48,7 +50,15 @@ const moduleRoutes = [
     {
         path: "/static-pages",
         route: StaticPageRoutes
-    }
+    },
+    {
+    path: "/plans",
+    route: PlanRoutes,
+  },
+  {
+    path: "/subscriptions",
+    route: SubscriptionRoutes,
+  }
 
 ]
 
