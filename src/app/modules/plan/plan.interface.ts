@@ -4,7 +4,7 @@ export type TAnalyticsType = "none" | "basic" | "detailed";
 
 export interface TPlanFeatures {
   maxPhotos: number; // use -1 for unlimited
-  maxServiceCategories: number; // use -1 for unlimited
+  maxOfferServices: number; // use -1 for unlimited
   badgeType: TBadgeType;
   analyticsType: TAnalyticsType;
   priorityScore: number; // bigger = higher ranking

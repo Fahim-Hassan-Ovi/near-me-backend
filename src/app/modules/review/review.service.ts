@@ -1,17 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { IReview } from "./review.interface";
 import { Review } from "./review.model";
-
+import { enforceReviewReplyPermission } from "../../utils/subscriptionHelper/enforceReviewReplyPermission";
 const createReview = async (payload: IReview, userId: string) => {
+  if (payload.parentReview) {
+    await enforceReviewReplyPermission(userId);
+  }
 
   const review = await Review.create({
     ...payload,
-    user: userId
+    user: userId,
   });
 
   if (payload.parentReview) {
     await Review.findByIdAndUpdate(payload.parentReview, {
-      $push: { replies: review._id }
+      $push: { replies: review._id },
     });
   }
 
@@ -21,7 +24,7 @@ const createReview = async (payload: IReview, userId: string) => {
 const getRepliesRecursively = async (parentId: string): Promise<any[]> => {
   const replies = await Review.find({ parentReview: parentId })
     .populate("user", "name")
-    .lean(); // 👈 important for performance
+    .lean();
 
   for (const reply of replies) {
     reply.replies = await getRepliesRecursively(reply._id.toString());
@@ -31,13 +34,12 @@ const getRepliesRecursively = async (parentId: string): Promise<any[]> => {
 };
 
 const getServiceReviews = async (serviceId: string) => {
-
   const reviews = await Review.find({
     service: serviceId,
-    parentReview: null
+    parentReview: null,
   })
     .populate("user", "name")
-    .lean(); // 👈 important
+    .lean();
 
   for (const review of reviews) {
     review.replies = await getRepliesRecursively(review._id.toString());
@@ -53,5 +55,5 @@ const deleteReview = async (id: string) => {
 export const ReviewServices = {
   createReview,
   getServiceReviews,
-  deleteReview
+  deleteReview,
 };

@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { validateRequest } from "../../middlewares/validateRequest";
-import { createServiceZodSchema, updateServiceZodSchema } from "./service.validation";
+import {
+  createServiceZodSchema,
+  updateServiceZodSchema,
+} from "./service.validation";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
 import { ServiceControllers } from "./service.controller";
@@ -12,27 +15,32 @@ router.post(
   "/create",
   checkAuth(Role.PROVIDER),
   multerUpload.fields([
-    { name: "media", maxCount: 10 },        // multiple images
-    { name: "company_logo", maxCount: 1 }   // single logo
+    { name: "media" },
+    { name: "company_logo", maxCount: 1 },
   ]),
   validateRequest(createServiceZodSchema),
   ServiceControllers.createService
 );
 
-router.get("/all-services",
-    checkAuth(Role.SUPER_ADMIN),
-    ServiceControllers.getAllServices);
+router.get(
+  "/all-services",
+  checkAuth(Role.SUPER_ADMIN),
+  ServiceControllers.getAllServices
+);
 
-router.get("/:id",
-    ServiceControllers.getSingleService);
+router.get("/:id", ServiceControllers.getSingleService);
 
-router.patch("/:id",
-    validateRequest(updateServiceZodSchema),
-    checkAuth(Role.PROVIDER),
-    ServiceControllers.updateService);
+router.patch(
+  "/:id",
+  checkAuth(Role.PROVIDER),
+  multerUpload.fields([
+    { name: "media"},
+    { name: "company_logo", maxCount: 1 },
+  ]),
+  validateRequest(updateServiceZodSchema),
+  ServiceControllers.updateService
+);
 
-router.delete("/:id",
-    checkAuth(Role.PROVIDER),
-    ServiceControllers.deleteService);
+router.delete("/:id", checkAuth(Role.PROVIDER), ServiceControllers.deleteService);
 
 export const ServiceRoutes = router;

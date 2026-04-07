@@ -4,18 +4,17 @@ import AppError from "../../errorHelpers/AppError";
 import { getEffectivePlan } from "./getEffectivePlan";
 
 
-export const enforceCategoryLimit = async (
+export const enforceOfferServicesLimit = async (
   userId: string,
-  currentCategoryCount: number,
-  newCategoryCount = 1
+  offerServicesCount: number
 ) => {
   const plan: any = await getEffectivePlan(userId);
-  const limit = plan.features.maxServiceCategories;
+  const limit = plan.features.maxOfferServices;
 
-  if (limit !== -1 && currentCategoryCount + newCategoryCount > limit) {
+  if (limit !== -1 && offerServicesCount > limit) {
     throw new AppError(
       httpStatus.FORBIDDEN,
-      `Your current plan allows maximum ${limit} categories/services`
+      `Your current plan allows maximum ${limit} offered services`
     );
   }
 };

@@ -24,6 +24,5 @@ export interface TSubscription {
   paymentMethod?: string;
   paymentGateway?: string;
   transactionId?: string;
-
   isCurrent: boolean;
 }

@@ -4,11 +4,13 @@ import { validateRequest } from "../../middlewares/validateRequest";
 import { createHighlightServiceZodSchema, updateHighlightServiceZodSchema } from "./highlight_service.validation";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { Role } from "../user/user.interface";
+import { multerUpload } from "../../config/multer.config";
 
 const router = Router();
 
 router.post(
     "/",
+    multerUpload.single("image"),
     validateRequest(createHighlightServiceZodSchema),
     checkAuth(Role.PROVIDER),
     HighlightServiceControllers.createHighlight

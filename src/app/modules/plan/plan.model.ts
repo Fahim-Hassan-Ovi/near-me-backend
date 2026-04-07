@@ -17,7 +17,7 @@ const planSchema = new Schema<TPlan>(
     description: { type: String },
     features: {
       maxPhotos: { type: Number, required: true },
-      maxServiceCategories: { type: Number, required: true },
+      maxOfferServices: { type: Number, required: true },
       badgeType: {
         type: String,
         enum: ["none", "active", "verified_pro", "elite"],

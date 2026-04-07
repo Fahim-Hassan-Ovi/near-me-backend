@@ -4,12 +4,13 @@ import { SubscriptionService } from "./subscription.service";
 import { StatusCodes } from "http-status-codes";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
+import { JwtPayload } from "jsonwebtoken";
 
 const getMyCurrentSubscription = catchAsync(
   async (req: Request, res: Response) => {
-    const user = (req as any).user;
+    const user = req.user as JwtPayload;
 
-    const result = await SubscriptionService.getMyCurrentSubscription(user._id);
+    const result = await SubscriptionService.getMyCurrentSubscription(user.userId);
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,
@@ -22,9 +23,9 @@ const getMyCurrentSubscription = catchAsync(
 
 const getMySubscriptionHistory = catchAsync(
   async (req: Request, res: Response) => {
-    const user = (req as any).user;
+    const user = req.user as JwtPayload;
 
-    const result = await SubscriptionService.getMySubscriptionHistory(user._id);
+    const result = await SubscriptionService.getMySubscriptionHistory(user.userId);
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,
@@ -36,10 +37,10 @@ const getMySubscriptionHistory = catchAsync(
 );
 
 const subscribeToPlan = catchAsync(async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user as JwtPayload;
   const { planId } = req.body;
 
-  const result = await SubscriptionService.subscribeToPlan(user._id, planId);
+  const result = await SubscriptionService.subscribeToPlan(user.userId, planId);
 
   sendResponse(res, {
     statusCode: StatusCodes.OK,
@@ -51,9 +52,9 @@ const subscribeToPlan = catchAsync(async (req: Request, res: Response) => {
 
 const cancelMySubscription = catchAsync(
   async (req: Request, res: Response) => {
-    const user = (req as any).user;
+    const user = req.user as JwtPayload;
 
-    const result = await SubscriptionService.cancelMySubscription(user._id);
+    const result = await SubscriptionService.cancelMySubscription(user.userId);
 
     sendResponse(res, {
       statusCode: StatusCodes.OK,

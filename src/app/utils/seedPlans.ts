@@ -11,7 +11,7 @@ export const seedPlans = async () => {
       interval: "monthly",
       features: {
         maxPhotos: 3,
-        maxServiceCategories: 1,
+        maxOfferServices: 1,
         badgeType: "none",
         analyticsType: "none",
         priorityScore: 0,
@@ -30,7 +30,7 @@ export const seedPlans = async () => {
       interval: "monthly",
       features: {
         maxPhotos: 10,
-        maxServiceCategories: 3,
+        maxOfferServices: 3,
         badgeType: "active",
         analyticsType: "basic",
         priorityScore: 1,
@@ -49,7 +49,7 @@ export const seedPlans = async () => {
       interval: "monthly",
       features: {
         maxPhotos: -1,
-        maxServiceCategories: -1,
+        maxOfferServices: -1,
         badgeType: "verified_pro",
         analyticsType: "detailed",
         priorityScore: 2,
@@ -68,7 +68,7 @@ export const seedPlans = async () => {
       interval: "monthly",
       features: {
         maxPhotos: -1,
-        maxServiceCategories: -1,
+        maxOfferServices: -1,
         badgeType: "elite",
         analyticsType: "detailed",
         priorityScore: 3,
@@ -81,8 +81,8 @@ export const seedPlans = async () => {
   ];
 
   for (const plan of plans) {
-    await Plan.updateOne({ name: plan.name }, { $set: plan }, { upsert: true });
+    await Plan.updateOne({ name: plan.name }, { $set: plan }, { upsert: true }
+    );
   }
-
   console.log("Plans seeded successfully");
 };
