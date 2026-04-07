@@ -4,10 +4,15 @@ import httpStatus from "http-status-codes";
 import { HighlightServiceServices } from "./highlight_service.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
+import { IHighlightService } from "./highlight_service.interface";
 
 const createHighlight = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const payload: IHighlightService = {
+        ...req.body,
+        image: req.file?.path
+    }
 
-    const result = await HighlightServiceServices.createHighlight(req.body);
+    const result = await HighlightServiceServices.createHighlight(payload);
 
     sendResponse(res, {
         success: true,

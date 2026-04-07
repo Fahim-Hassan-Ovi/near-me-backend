@@ -12,8 +12,8 @@ export const createHighlightServiceZodSchema = z.object({
 
   image: z
     .string()
-    .url({ message: "Image must be a valid URL" }),
-
+    .optional(),
+    
   description: z
     .string()
     .min(10, { message: "Description must be at least 10 characters long" })
