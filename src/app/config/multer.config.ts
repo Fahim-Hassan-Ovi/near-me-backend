@@ -13,21 +13,21 @@ const storage = new CloudinaryStorage({
     // File size validation handled by multer (we'll add below)
 
     // Validate file type
-    if (file.fieldname === "company_logo") {
-      const allowedLogoTypes = ["image/png", "image/jpeg", "image/jpg"];
+    // if (file.fieldname === "company_logo") {
+    //   const allowedLogoTypes = ["image/png", "image/jpeg", "image/jpg"];
 
-      if (!allowedLogoTypes.includes(file.mimetype)) {
-        throw new Error("Company logo must be PNG or JPEG");
-      }
-    }
+    //   if (!allowedLogoTypes.includes(file.mimetype)) {
+    //     throw new Error("Company logo must be PNG or JPEG");
+    //   }
+    // }
 
-    if (file.fieldname === "media") {
-      const allowedMediaTypes = ["image/png", "image/jpeg", "image/jpg"];
+    // if (file.fieldname === "media") {
+    //   const allowedMediaTypes = ["image/png", "image/jpeg", "image/jpg"];
 
-      if (!allowedMediaTypes.includes(file.mimetype)) {
-        throw new Error("Media must be image files only");
-      }
-    }
+    //   if (!allowedMediaTypes.includes(file.mimetype)) {
+    //     throw new Error("Media must be image files only");
+    //   }
+    // }
 
     // 🔥 VALIDATION END
 

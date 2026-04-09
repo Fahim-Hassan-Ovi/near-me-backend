@@ -40,6 +40,7 @@ export interface IUser {
     isDeleted?: string;
     isActive?: IsActive;
     isVerified?: boolean;
+    otp?: string;
     role: Role;
     auths: IAuthProvider[];
     service?: Types.ObjectId[];

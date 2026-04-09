@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response, Router } from "express";
 import { UserControllers } from "./user.controller";
-import { createUserZodSchema, updateUserZodSchema } from "./user.validation";
+import { createUserZodSchema, updateUserZodSchema, verifyOtpZodSchema } from "./user.validation";
 import { validateRequest } from "../../middlewares/validateRequest";
 import { Role } from "./user.interface";
 import { checkAuth } from "../../middlewares/checkAuth";
@@ -10,6 +10,9 @@ import { checkAuth } from "../../middlewares/checkAuth";
 const router = Router();
 
 router.post("/register", validateRequest(createUserZodSchema), UserControllers.createUser);
+
+router.post('/verify', validateRequest(verifyOtpZodSchema), UserControllers.verifyUser);
+router.post('/resend-otp', UserControllers.resendOTP);
 
 router.get("/all-users", checkAuth(Role.PROVIDER, Role.SUPER_ADMIN) , UserControllers.getAllUsers);
 

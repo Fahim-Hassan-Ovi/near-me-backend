@@ -9,10 +9,22 @@ import httpStatus from "http-status-codes"
 
 export const checkAuth = (...authRoles: string[]) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const accessToken = req.headers.authorization;
-        if (!accessToken) {
-            throw new AppError(403, "No token received")
+        // const accessToken = req.headers.authorization;
+        // if (!accessToken) {
+        //     throw new AppError(403, "No token received")
+        // }
+
+        // const verifiedToken = verifyToken(accessToken, envVars.JWT_ACCESS_SECRET) as JwtPayload;
+
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader) {
+            throw new AppError(403, "No token received");
         }
+
+        const accessToken = authHeader.startsWith("Bearer ")
+            ? authHeader.split(" ")[1]
+            : authHeader;
 
         const verifiedToken = verifyToken(accessToken, envVars.JWT_ACCESS_SECRET) as JwtPayload;
 
@@ -37,6 +49,7 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
             throw new AppError(403, "You are not permitted to view this route")
         }
         req.user = verifiedToken;
+        console.log("AUTH HEADER:", req.headers.authorization);
         next();
 
     } catch (error) {

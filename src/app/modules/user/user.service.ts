@@ -8,6 +8,8 @@ import { envVars } from "../../config/env";
 import { JwtPayload } from "jsonwebtoken";
 import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
+import { randomOTPGenerator } from "../../utils/randomOTPGenerator";
+import { sendEmail } from "../../utils/sendEmail";
 
 const createUser = async (payload: Partial<IUser>) => {
 
@@ -29,15 +31,137 @@ const createUser = async (payload: Partial<IUser>) => {
     const authProvider: IAuthProvider = { provider: "credentials", providerId: email as string };
     // console.log(email, password)
 
-    const user = await User.create({
+    const generateOTP = randomOTPGenerator(1000, 9999);
+
+    const userPayload = {
         email,
         password: hashedPassword,
         auths: [authProvider],
-        ...rest
-    })
+        otp: generateOTP,
+
+        ...rest,
+    };
+
+    const user = await User.create(userPayload as IUser);
+
+    // Send OTP to verify
+    sendEmail({
+        to: user.email,
+        subject: 'User verify OTP',
+        templateName: 'otp',
+        templateData: {
+            name: user.name,
+            otp: user.otp,
+        },
+    });
+
+
+    // Reset user OTP after 2 min
+    setTimeout(async () => {
+        user.otp = "0";
+        user.save();
+    }, 1000 * 60 * 2);
+
+    // Delete User if he is not verified within __ time
+    setTimeout(async () => {
+        if (!user.isVerified) {
+            await User.findByIdAndDelete(user._id);
+        }
+    }, 1000 * 60 * 60 * 24);
+
+    // const user = await User.create({
+    //     email,
+    //     password: hashedPassword,
+    //     auths: [authProvider],
+    //     ...rest
+    // })
 
     return user;
 }
+
+const verifyUserService = async (email: string, otp: string) => {
+    console.log(otp, email)
+    if (!email || !otp) {
+        throw new AppError(400, 'OTP required!');
+    }
+
+    const isUser = await User.findOne({ email }).select('-password -auths');
+    if (!isUser) {
+        throw new AppError(400, 'User not found by this email!');
+    }
+    console.log("this is the otp",isUser.otp, otp)
+    if (isUser.otp !== otp || otp.length < 4) {
+        throw new AppError(400, 'Invalid OTP!');
+    }
+
+
+    const updateUser = await User.findOneAndUpdate(
+        { email },
+        { isVerified: true, otp: 0, $unset: { deleteAfter: '' } },
+        {
+            runValidators: true,
+            new: true,
+            projection: {
+                password: 0,
+                otp: 0,
+                auths: 0,
+                otpExpireAt: 0,
+                updatedAt: 0,
+                createdAt: 0,
+            },
+        }
+    );
+
+    return updateUser;
+};
+
+const resendOTPService = async (email: string) => {
+    if (!email) {
+        throw new AppError(400, 'Email required!');
+    }
+
+    const isUser = await User.findOne({ email });
+    if (!isUser) {
+        throw new AppError(400, 'User not found by this email!');
+    }
+
+    if (isUser.isVerified) {
+        throw new AppError(400, 'User already verified!');
+    }
+
+    const generateOTP = randomOTPGenerator(1000, 9999);
+    const otpExpiry = new Date(Date.now() + 2 * 60 * 1000); // 2 min
+
+    await User.findOneAndUpdate(
+        { email },
+        { otp: generateOTP, otpExpireAt: otpExpiry },
+        {
+            runValidators: true,
+            new: true,
+            projection: {
+                password: 0,
+                otp: 0,
+                auths: 0,
+                otpExpireAt: 0,
+                updatedAt: 0,
+                createdAt: 0,
+            },
+        }
+    );
+
+    // Send OTP to verify
+    sendEmail({
+        to: isUser.email,
+        subject: 'User verify OTP',
+        templateName: 'otp',
+        templateData: {
+            name: isUser.name,
+            otp: generateOTP,
+        },
+    });
+
+    return isUser;
+};
 
 const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken: JwtPayload) => {
 
@@ -133,5 +257,7 @@ export const UserServices = {
     getAllUsers,
     updateUser,
     getSingleUser,
-    getMe
+    getMe,
+    verifyUserService,
+    resendOTPService
 }

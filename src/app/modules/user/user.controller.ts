@@ -5,10 +5,19 @@ import { UserServices } from "./user.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { JwtPayload } from "jsonwebtoken";
+import { setAuthCookie } from "../../utils/setCookie";
+import { createUserTokens } from "../../utils/userToken";
 
 
 const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+
     const user = await UserServices.createUser(req.body);
+
+    res.cookie('email', user.email, {
+    httpOnly: true,
+    secure: false,
+  });
+
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
@@ -16,6 +25,51 @@ const createUser = catchAsync(async (req: Request, res: Response, next: NextFunc
         data: user
     })
 })
+
+const verifyUser = catchAsync(async (req: Request, res: Response) => {
+  const email = req.body.email as string;
+  const otp = req.body.otp as string;
+
+
+  const result = await UserServices.verifyUserService(
+    email,
+    otp as string
+  );
+
+  const jwtPayload = {
+    _id: result?._id,
+    email: result?.email,
+    role: result?.role,
+    isVerified: result?.isVerified,
+  };
+
+  // Set refreshToken and accessToken in Cookies
+  const userTokens = await createUserTokens(jwtPayload);
+  setAuthCookie(res, userTokens);
+
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'User verified successfuly!',
+    data: {
+      data: result,
+    },
+  });
+});
+
+const resendOTP = catchAsync(async (req: Request, res: Response) => {
+  // const email = req.cookies['email'] as string;
+  const email = req.body.email as string;
+  await UserServices.resendOTPService(email);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'OTP Sent Successfully!',
+    data: null,
+  });
+});
 
 const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.params.id as string;
@@ -74,5 +128,7 @@ export const UserControllers = {
     getAllUsers,
     updateUser,
     getSingleUser,
-    getMe
+    getMe,
+    verifyUser,
+    resendOTP
 }

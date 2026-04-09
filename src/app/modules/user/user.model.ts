@@ -26,6 +26,7 @@ const userSchema = new Schema<IUser>({
         default: IsActive.ACTIVE,
     },
     isVerified: { type: Boolean, default: false },
+    otp: { type: String, default: 0 },
     auths: [authProviderSchema],
     fcmToken: { type: String },
     coord: {
