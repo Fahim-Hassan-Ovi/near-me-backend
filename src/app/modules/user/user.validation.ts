@@ -44,6 +44,9 @@ export const createUserZodSchema = z.object({
         .refine(val => typeof val === "boolean" || val === undefined, {
             message: "isVerified must be true or false",
         }),
+    hasService: z
+        .boolean()
+        .optional(),
     address: z.string()
         .min(1, { message: "Address is required" })
         .max(200, { message: "Address cannot exceed 200 characters." })

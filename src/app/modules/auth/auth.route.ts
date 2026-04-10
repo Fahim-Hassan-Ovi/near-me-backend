@@ -11,10 +11,22 @@ const router = Router();
 router.post("/login", AuthControllers.credentialsLogin);
 router.post("/refresh-token", AuthControllers.getNewAccessToken);
 router.post("/logout", AuthControllers.logout);
-router.post("/change-password", checkAuth(...Object.values(Role)), AuthControllers.changePassword);
-router.post("/set-password", checkAuth(...Object.values(Role)), AuthControllers.setPassword);
-router.post("/forgot-password", AuthControllers.forgotPassword);
-router.post("/reset-password", checkAuth(...Object.values(Role)), AuthControllers.resetPassword);
+
+// CHANGE PASSWORD
+router.post('/change-password', checkAuth(...Object.keys(Role)), AuthControllers.changePassword);
+// FORGET PASSWORD
+router.get('/forget-password/:email', AuthControllers.forgetPassword);
+// VERIFY FORGET PASSWORD OTP
+router.post('/verify-otp', AuthControllers.verifyForgetPasswordOTP);
+// RESET PASSWORD
+router.post('/reset-password', AuthControllers.resetPassword);
+
+
+// previous routes
+// router.post("/change-password", checkAuth(...Object.values(Role)), AuthControllers.changePassword);
+// router.post("/set-password", checkAuth(...Object.values(Role)), AuthControllers.setPassword);
+// router.post("/forgot-password", AuthControllers.forgotPassword);
+// router.post("/reset-password", checkAuth(...Object.values(Role)), AuthControllers.resetPassword);
 
 
 // google

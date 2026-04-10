@@ -8,6 +8,7 @@ import { serviceSearchableFields } from "./service.constant";
 import { enforceOfferServicesLimit } from "../../utils/subscriptionHelper/enforceCategoryLimit";
 import { enforcePhotoLimit } from "../../utils/subscriptionHelper/enforcePhotoLimit";
 import { Role } from "../user/user.interface";
+import { User } from "../user/user.model";
 
 const createService = async (payload: Partial<IService>, userId: string) => {
   // 1) one shop per provider
@@ -33,6 +34,9 @@ const createService = async (payload: Partial<IService>, userId: string) => {
     ...payload,
     provider: userId,
   });
+
+  // Update hasService to true once a service is created
+    await User.findByIdAndUpdate(userId, { hasService: true });
 
   return service;
 };
@@ -139,6 +143,7 @@ const deleteService = async (id: string, user: any) => {
   }
 
   await Service.findByIdAndDelete(id);
+  await User.findByIdAndUpdate(service.provider, { hasService: false });
 };
 
 export const ServiceServices = {
