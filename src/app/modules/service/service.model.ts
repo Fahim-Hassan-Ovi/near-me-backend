@@ -17,6 +17,8 @@ const locationSchema = new Schema<ILocation>({
   },
 })
 
+// locationSchema.index({ coordinates: '2dsphere' }); // 2dsphere index
+
 const serviceSchema = new Schema<IService>({
   provider: {
     type: Schema.Types.ObjectId,
@@ -31,12 +33,12 @@ const serviceSchema = new Schema<IService>({
     required: true
   },
   offer_services: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Category",
-        required: true,
-      },
-    ],
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+  ],
   phone: { type: Number, required: true },
   service_address: { type: String, required: true },
   about: { type: String, required: true },
@@ -47,6 +49,6 @@ const serviceSchema = new Schema<IService>({
   openingTime: { type: String, required: true },
   closingTime: { type: String, required: true },
   allTimeAvailability: { type: Boolean, required: true },
-})
-
+});
+serviceSchema.index({ location: '2dsphere' });
 export const Service = model<IService>("Service", serviceSchema);

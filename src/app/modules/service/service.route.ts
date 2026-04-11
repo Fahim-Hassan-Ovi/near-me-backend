@@ -30,6 +30,9 @@ router.get(
 
 router.get("/:id", ServiceControllers.getSingleService);
 
+// Route to get nearest services
+router.post("/nearest", ServiceControllers.getNearestServices);
+
 router.patch(
   "/:id",
   checkAuth(Role.PROVIDER),

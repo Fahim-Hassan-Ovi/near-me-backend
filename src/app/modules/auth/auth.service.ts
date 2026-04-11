@@ -193,7 +193,12 @@ const resetPassword = async (token: string, newPassword: string) => {
     }
 
     // SET NEW PASSWORD
-    user.password = newPassword;
+    const hashedPassword = await bcryptjs.hash(
+        newPassword,
+        Number(envVars.BCRYPT_SALT_ROUND)
+    );
+
+    user.password = hashedPassword;
     await user.save();
 
     return null;

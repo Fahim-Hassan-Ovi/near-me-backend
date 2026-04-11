@@ -63,6 +63,19 @@ const getSingleService = catchAsync(
   }
 );
 
+// Controller to get nearest services based on user location
+const getNearestServices = async (req: Request, res: Response) => {
+  const { lon, lat } = req.body;  // User's latitude and longitude
+
+  const services = await ServiceServices.getNearestServices(lon, lat);
+
+  res.status(httpStatus.OK).json({
+    success: true,
+    message: "Nearest services retrieved successfully",
+    data: services,
+  });
+};
+
 const updateService = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
   const serviceId = req.params.id as string;
@@ -112,6 +125,7 @@ const deleteService = catchAsync(
 export const ServiceControllers = {
   createService,
   getAllServices,
+  getNearestServices,
   updateService,
   getSingleService,
   deleteService,

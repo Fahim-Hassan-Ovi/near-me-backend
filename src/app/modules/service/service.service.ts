@@ -88,6 +88,29 @@ const getSingleService = async (id: string) => {
   return service;
 };
 
+const getNearestServices = async (lon: string, lat: string) => {
+
+  // Check if lat/lon is provided
+  if (!lat || !lon) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Location not provided");
+  }
+
+  // Find services within a 10-mile radius (16093 meters)
+  const services = await Service.find({
+    location: {
+      $nearSphere: {
+        $geometry: {
+          type: "Point",
+          coordinates: [lon, lat],  // Longitude, Latitude
+        },
+        $maxDistance: 16093, // 10 miles in meters
+      },
+    },
+  });
+
+  return services;
+};
+
 const updateService = async (
   id: string,
   payload: Partial<IService>,
@@ -150,6 +173,7 @@ export const ServiceServices = {
   createService,
   getSingleService,
   getAllServices,
+  getNearestServices,
   updateService,
   deleteService,
 };
