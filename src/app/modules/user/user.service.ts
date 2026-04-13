@@ -25,7 +25,6 @@ const createUser = async (payload: Partial<IUser>) => {
         throw new AppError(httpStatus.BAD_REQUEST, "Password is required");
     }
 
-
     const hashedPassword = await bcryptjs.hash(password as string, Number(envVars.BCRYPT_SALT_ROUND))
 
     const authProvider: IAuthProvider = { provider: "credentials", providerId: email as string };
@@ -78,6 +77,23 @@ const createUser = async (payload: Partial<IUser>) => {
 
     return user;
 }
+
+const updateUserLocation = async (
+  userId: string,
+  lat: number,
+  lon: number
+) => {
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    {
+      coord: { lat, lon },
+    },
+    { new: true }
+  );
+
+  return updatedUser;
+};
+
 
 const verifyUserService = async (email: string, otp: string) => {
     console.log(otp, email)
@@ -254,6 +270,7 @@ const getMe = async (userId: string) => {
 
 export const UserServices = {
     createUser,
+    updateUserLocation,
     getAllUsers,
     updateUser,
     getSingleUser,

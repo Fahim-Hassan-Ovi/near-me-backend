@@ -49,7 +49,7 @@ export const checkAuth = (...authRoles: string[]) => async (req: Request, res: R
             throw new AppError(403, "You are not permitted to view this route")
         }
         req.user = verifiedToken;
-        console.log("AUTH HEADER:", req.headers.authorization);
+        // console.log("AUTH HEADER:", req.headers.authorization);
         next();
 
     } catch (error) {

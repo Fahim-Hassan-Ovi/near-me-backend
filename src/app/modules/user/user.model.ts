@@ -31,7 +31,7 @@ const userSchema = new Schema<IUser>({
     auths: [authProviderSchema],
     fcmToken: { type: String },
     coord: {
-        type: { lat: { type: Number }, long: { type: Number } },
+        type: { lat: { type: Number }, lon: { type: Number } },
         _id: false,
     },
     subscriptionInfo: {
@@ -67,5 +67,7 @@ const userSchema = new Schema<IUser>({
     timestamps: true,
     versionKey: false
 })
+
+userSchema.index({ location: "2dsphere" });
 
 export const User = model<IUser>("User", userSchema);

@@ -19,7 +19,7 @@ export interface IAuthProvider {
 
 export interface ICoord {
     lat: number;
-    long: number;
+    lon: number;
 }
 
 export interface ISubscriptionInfo {

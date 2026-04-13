@@ -11,6 +11,8 @@ const router = Router();
 
 router.post("/register", validateRequest(createUserZodSchema), UserControllers.createUser);
 
+router.patch("/update-location", checkAuth(Role.USER, Role.PROVIDER, Role.SUPER_ADMIN), UserControllers.updateUserLocation);
+
 router.post('/verify', validateRequest(verifyOtpZodSchema), UserControllers.verifyUser);
 router.post('/resend-otp', UserControllers.resendOTP);
 

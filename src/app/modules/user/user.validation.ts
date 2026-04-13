@@ -55,7 +55,7 @@ export const createUserZodSchema = z.object({
     coord: z
         .object({
             lat: z.number(),
-            long: z.number(),
+            lon: z.number(),
         })
         .optional()
 
@@ -88,6 +88,12 @@ export const updateUserZodSchema = z.object({
     address: z.string()
         .min(1, { message: "Address is required" })
         .max(200, { message: "Address cannot exceed 200 characters." })
+        .optional(),
+    coord: z
+        .object({
+            lat: z.number(),
+            lon: z.number(),
+        })
         .optional()
 
 })
