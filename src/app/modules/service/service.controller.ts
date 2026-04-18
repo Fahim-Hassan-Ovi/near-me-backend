@@ -7,6 +7,7 @@ import httpStatus from "http-status-codes";
 import { ServiceServices } from "./service.service";
 import { IService } from "./service.interface";
 import { JwtPayload } from "jsonwebtoken";
+import AppError from "../../errorHelpers/AppError";
 
 const createService = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
@@ -64,17 +65,50 @@ const getSingleService = catchAsync(
 );
 
 // Controller to get nearest services based on user location
-const getNearestServices = async (req: Request, res: Response) => {
-  const { lon, lat } = req.body;  // User's latitude and longitude
+const getNearestServices = catchAsync(async (req: Request, res: Response) => {
+  const { lon, lat, minRating, radius, categories } = req.body;
+  // categories can be: "id1" or ["id1", "id2", "id3"]
 
-  const services = await ServiceServices.getNearestServices(lon, lat);
+  const services = await ServiceServices.getNearestServices(
+    lon,
+    lat,
+    minRating ? parseFloat(minRating) : undefined,
+    radius ? parseFloat(radius) : undefined,
+    categories
+  );
 
-  res.status(httpStatus.OK).json({
+  sendResponse(res, {
     success: true,
+    statusCode: httpStatus.OK,
     message: "Nearest services retrieved successfully",
     data: services,
   });
-};
+});
+
+const searchServices = catchAsync(async (req: Request, res: Response) => {
+  const { lon, lat, searchTerm, viewAll } = req.query;
+
+  if (!searchTerm) {
+    throw new AppError(httpStatus.BAD_REQUEST, "searchTerm is required");
+  }
+
+  const limit = viewAll === "true" ? undefined : 3;
+
+  const result = await ServiceServices.searchServices(
+    lon as string,
+    lat as string,
+    searchTerm as string,
+    limit
+  );
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Search results retrieved successfully",
+    data: result.data,
+    meta: { total: result.total, showing: result.showing },
+  });
+});
 
 const updateService = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
@@ -126,6 +160,7 @@ export const ServiceControllers = {
   createService,
   getAllServices,
   getNearestServices,
+  searchServices,
   updateService,
   getSingleService,
   deleteService,

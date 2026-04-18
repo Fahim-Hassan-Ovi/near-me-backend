@@ -12,6 +12,7 @@ export interface IService {
     service_name?: string;
     service_category?: Types.ObjectId;
     offer_services?: Types.ObjectId[];
+    // reviews?: Types.ObjectId[];
     phone?: number;
     service_address?: string;
     about?: string;

@@ -2,6 +2,7 @@ import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
 import { HighlightService } from "./highlight_service.model";
 import { IHighlightService } from "./highlight_service.interface";
+import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
 
 const createHighlight = async (payload: Partial<IHighlightService>) => {
 
@@ -45,6 +46,10 @@ const updateHighlight = async (id: string, payload: Partial<IHighlightService>) 
         payload,
         { new: true, runValidators: true }
     );
+
+    if (payload.image && highlight.image) {
+        await deleteImageFromCLoudinary(highlight.image)
+    }
 
     return updatedHighlight;
 };

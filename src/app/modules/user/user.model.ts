@@ -29,6 +29,11 @@ const userSchema = new Schema<IUser>({
     hasService: { type: Boolean, default: false },
     otp: { type: String, default: 0 },
     auths: [authProviderSchema],
+    service: 
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Service",
+        },
     fcmToken: { type: String },
     coord: {
         type: { lat: { type: Number }, lon: { type: Number } },

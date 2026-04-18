@@ -10,9 +10,9 @@ const router = Router();
 
 router.post(
     "/",
+    checkAuth(Role.PROVIDER),
     multerUpload.single("image"),
     validateRequest(createHighlightServiceZodSchema),
-    checkAuth(Role.PROVIDER),
     HighlightServiceControllers.createHighlight
 );
 
@@ -28,8 +28,9 @@ router.get(
 
 router.patch(
     "/:id",
-    validateRequest(updateHighlightServiceZodSchema),
     checkAuth(Role.PROVIDER),
+    multerUpload.single("image"),
+    validateRequest(updateHighlightServiceZodSchema),
     HighlightServiceControllers.updateHighlight
 );
 

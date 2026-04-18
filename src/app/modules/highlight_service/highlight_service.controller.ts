@@ -54,7 +54,13 @@ const updateHighlight = catchAsync(async (req: Request, res: Response, next: Nex
 
     const id = req.params.id as string;
 
-    const result = await HighlightServiceServices.updateHighlight(id, req.body);
+    const payload: IHighlightService = {
+        ...req.body,
+        image: req.file?.path
+    }
+
+
+    const result = await HighlightServiceServices.updateHighlight(id, payload);
 
     sendResponse(res, {
         success: true,

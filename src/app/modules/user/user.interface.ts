@@ -44,9 +44,9 @@ export interface IUser {
     otp?: string;
     role: Role;
     auths: IAuthProvider[];
-    service?: Types.ObjectId[];
+    service?: Types.ObjectId;
     reviews?: Types.ObjectId[];
-    chats?: Types.ObjectId[];
+    messages?: Types.ObjectId[];
     createdAt?: Date;
     fcmToken?: string;
     coord?: ICoord;

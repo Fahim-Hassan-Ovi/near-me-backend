@@ -9,6 +9,38 @@ import { enforceOfferServicesLimit } from "../../utils/subscriptionHelper/enforc
 import { enforcePhotoLimit } from "../../utils/subscriptionHelper/enforcePhotoLimit";
 import { Role } from "../user/user.interface";
 import { User } from "../user/user.model";
+import { Review } from "../review/review.model";
+import { buildServiceMeta } from "../../utils/getNearestServicesHelper/buildServiceMeta";
+import { buildGeoQuery } from "../../utils/getNearestServicesHelper/getNearestServicesQuery";
+
+
+// ─── Shared: aggregate ratings for a list of serviceIds ───────────────────────
+const aggregateRatings = async (serviceIds: any[]) => {
+  const ratingAggregates = await Review.aggregate([
+    {
+      $match: {
+        service: { $in: serviceIds },
+        parentReview: null,
+        rating: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: "$service",
+        averageRating: { $avg: "$rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return new Map(ratingAggregates.map((r) => [r._id.toString(), r]));
+};
+
+// ─── Shared: slim select + provider populate ──────────────────────────────────
+const SERVICE_SELECT =
+  "_id service_name company_logo location openingTime closingTime allTimeAvailability";
+const PROVIDER_SELECT =
+  "subscriptionInfo.planName subscriptionInfo.badgeType subscriptionInfo.priorityScore";
 
 const createService = async (payload: Partial<IService>, userId: string) => {
   // 1) one shop per provider
@@ -35,8 +67,25 @@ const createService = async (payload: Partial<IService>, userId: string) => {
     provider: userId,
   });
 
+  // await User.findByIdAndUpdate(
+  //   userId,
+  //   {
+  //     $push: { service: service._id },
+  //   },
+  //   { new: true }
+  // );
+
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      service: service._id, // ✅ direct assignment
+    },
+    { returnDocument: "after" }
+  );
+
+
   // Update hasService to true once a service is created
-    await User.findByIdAndUpdate(userId, { hasService: true });
+  await User.findByIdAndUpdate(userId, { hasService: true });
 
   return service;
 };
@@ -88,28 +137,85 @@ const getSingleService = async (id: string) => {
   return service;
 };
 
-const getNearestServices = async (lon: string, lat: string) => {
 
-  // Check if lat/lon is provided
+// Get Nearest Services
+const getNearestServices = async (
+  lon: string,
+  lat: string,
+  minRating?: number,
+  radius?: number,
+  categories?: string | string[]
+) => {
   if (!lat || !lon) {
     throw new AppError(httpStatus.BAD_REQUEST, "Location not provided");
   }
 
-  // Find services within a 10-mile radius (16093 meters)
-  const services = await Service.find({
-    location: {
-      $nearSphere: {
-        $geometry: {
-          type: "Point",
-          coordinates: [lon, lat],  // Longitude, Latitude
-        },
-        $maxDistance: 16093, // 10 miles in meters
-      },
-    },
-  });
+  const userLon = parseFloat(lon);
+  const userLat = parseFloat(lat);
+  const radiusInMeters = (radius ?? 10) * 1609.34;
 
-  return services;
+  const services = await Service.find(
+    buildGeoQuery(userLon, userLat, radiusInMeters, categories)
+  )
+    .select(SERVICE_SELECT)
+    .populate("provider", PROVIDER_SELECT);
+
+  const ratingMap = await aggregateRatings(services.map((s) => s._id));
+
+  let result = services.map((service) =>
+    buildServiceMeta(service, ratingMap, userLon, userLat)
+  );
+
+  if (minRating) {
+    result = result.filter((s) => s.averageRating >= minRating);
+  }
+
+  result.sort((a, b) => b.provider.priorityScore - a.provider.priorityScore);
+
+  return result;
 };
+
+
+// Search services by name with location and rating meta 
+
+const searchServices = async (
+  lon: string,
+  lat: string,
+  searchTerm: string,
+  limit?: number
+) => {
+  if (!lat || !lon) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Location not provided");
+  }
+
+  const userLon = parseFloat(lon);
+  const userLat = parseFloat(lat);
+
+  const services = await Service.find({
+    // service_name: { $regex: searchTerm, $options: "i" },
+    service_name: { $regex: `\\b${searchTerm}`, $options: "i" }
+  })
+    .select(SERVICE_SELECT)
+    .populate("provider", PROVIDER_SELECT);
+
+  const ratingMap = await aggregateRatings(services.map((s) => s._id));
+
+  let result = services.map((service) =>
+    buildServiceMeta(service, ratingMap, userLon, userLat)
+  );
+
+  // Sort by priorityScore before slicing
+  result.sort((a, b) => b.provider.priorityScore - a.provider.priorityScore);
+
+  const total = result.length;
+
+  if (limit) {
+    result = result.slice(0, limit);
+  }
+
+  return { data: result, total, showing: result.length };
+};
+
 
 const updateService = async (
   id: string,
@@ -152,6 +258,11 @@ const updateService = async (
 };
 
 const deleteService = async (id: string, user: any) => {
+  // console.log("this is from delete", user, user.userId)
+  if (!user || !user.userId) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
+
   const service = await Service.findById(id);
 
   if (!service) {
@@ -160,13 +271,17 @@ const deleteService = async (id: string, user: any) => {
 
   if (
     user.role === Role.PROVIDER &&
-    service.provider?.toString() !== user._id.toString()
+    service.provider &&
+    service.provider.toString() !== user.userId.toString()
   ) {
     throw new AppError(httpStatus.FORBIDDEN, "You are not authorized");
   }
 
   await Service.findByIdAndDelete(id);
-  await User.findByIdAndUpdate(service.provider, { hasService: false });
+
+  if (service.provider) {
+    await User.findByIdAndUpdate(service.provider, { hasService: false });
+  }
 };
 
 export const ServiceServices = {
@@ -174,6 +289,7 @@ export const ServiceServices = {
   getSingleService,
   getAllServices,
   getNearestServices,
+  searchServices,
   updateService,
   deleteService,
 };

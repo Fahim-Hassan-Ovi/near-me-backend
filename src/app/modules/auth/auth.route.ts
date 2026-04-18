@@ -33,4 +33,7 @@ router.post('/reset-password', AuthControllers.resetPassword);
 router.get("/google", AuthControllers.googleRegister)
 router.get("/google/callback", passport.authenticate("google", { failureRedirect: `${envVars.FRONTEND_URL}/login?error=There is some issues with your account. Please contact with out support team!` }), AuthControllers.googleCallbackController)
 
+// GOOGLE AUTH FOR APP
+router.post('/google/auth/:role', AuthControllers.googleAuthSystem);
+
 export const AuthRoutes = router;

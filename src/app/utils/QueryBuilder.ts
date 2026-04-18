@@ -10,7 +10,6 @@ export class QueryBuilder<T> {
         this.query = query;
     }
 
-
     filter(): this {
         const filter = { ...this.query }
 
@@ -30,7 +29,7 @@ export class QueryBuilder<T> {
             $or: searchableField.map(field => ({ [field]: { $regex: searchTerm, $options: "i" } }))
         }
         this.modelQuery = this.modelQuery.find(searchQuery)
-        return this
+        return this;
     }
 
     sort(): this {
@@ -75,46 +74,4 @@ export class QueryBuilder<T> {
 
         return { page, limit, total: totalDocuments, totalPage }
     }
-
-    // async getMeta(searchableField: string[]) {
-    //     const page = Number(this.query.page) || 1
-    //     const limit = Number(this.query.limit) || 10
-
-    //     // Clone the query BEFORE pagination
-    //     const countQuery = this.modelQuery.model.find()
-
-    //     // Apply search + filter manually again
-    //     const filter = { ...this.query }
-    //     for (const field of excludeField) {
-    //         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    //         delete filter[field]
-    //     }
-
-    //     const searchTerm = this.query.searchTerm || ""
-    //     const searchQuery = {
-    //         $or: this.query.searchTerm
-    //             ? searchableField.map(field => ({
-    //                 [field]: { $regex: searchTerm, $options: "i" }
-    //             }))
-    //             : []
-    //     }
-
-    //     if (searchTerm) {
-    //         countQuery.find(searchQuery)
-    //     }
-
-    //     countQuery.find(filter)
-
-    //     const totalQueryTours = await countQuery.countDocuments()
-
-    //     const totalPage = Math.ceil(totalQueryTours / limit)
-
-    //     return {
-    //         page,
-    //         limit,
-    //         total: await this.modelQuery.model.countDocuments(),
-    //         totalQueryTours,
-    //         totalPage
-    //     }
-    // }
 }

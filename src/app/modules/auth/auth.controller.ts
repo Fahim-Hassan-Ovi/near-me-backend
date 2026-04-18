@@ -150,67 +150,6 @@ const resetPassword = catchAsync(
     }
 );
 
-// const changePassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-
-//     const newPassword = req.body.newPassword;
-//     const oldPassword = req.body.oldPassword;
-//     const decodedToken = req.user as JwtPayload;
-
-//     await AuthServices.changePassword(oldPassword, newPassword, decodedToken);
-
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: httpStatus.OK,
-//         message: "Password change successfully",
-//         data: null
-//     })
-// })
-
-// const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-//     const decodedToken = req.user
-//     // console.log(req.body);
-
-//     await AuthServices.resetPassword(req.body, decodedToken as JwtPayload);
-
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: httpStatus.OK,
-//         message: "Password Changed Successfully",
-//         data: null,
-//     })
-// })
-
-// const setPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-//     const decodedToken = req.user as JwtPayload
-//     const { password } = req.body;
-
-//     await AuthServices.setPassword(decodedToken.userId, password);
-
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: httpStatus.OK,
-//         message: "Password Changed Successfully",
-//         data: null,
-//     })
-// })
-
-// const forgotPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-
-
-//     const { email } = req.body;
-
-//     await AuthServices.forgotPassword(email);
-
-//     sendResponse(res, {
-//         success: true,
-//         statusCode: httpStatus.OK,
-//         message: "Email Sent Successfully",
-//         data: null,
-//     })
-// })
 
 const googleRegister = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const redirect = req.query.redirect || "/";
@@ -239,6 +178,20 @@ const googleCallbackController = catchAsync(async (req: Request, res: Response, 
     res.redirect(`${envVars?.FRONTEND_URL}/${redirectTo}`)
 })
 
+// REGISTER WITH GOOGLE FOR APPLE DEVICE
+const googleAuthSystem = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const result = await AuthServices.googleAuthSystem(req.body);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: 200,
+      message: 'Authentication success',
+      data: result,
+    })
+  }
+);
+
 export const AuthControllers = {
     credentialsLogin,
     getNewAccessToken,
@@ -248,5 +201,6 @@ export const AuthControllers = {
     verifyForgetPasswordOTP,
     forgetPassword,
     googleCallbackController,
-    googleRegister
+    googleRegister,
+    googleAuthSystem
 }

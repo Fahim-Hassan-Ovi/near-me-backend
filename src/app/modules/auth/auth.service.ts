@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import httpStatus, { StatusCodes } from 'http-status-codes';
-import { IAuthProvider, IsActive, IUser } from "../user/user.interface"
+import { IAuthProvider, IsActive, IUser, Role } from "../user/user.interface"
 import AppError from '../../errorHelpers/AppError';
 import { User } from '../user/user.model';
 import bcryptjs from 'bcryptjs';
@@ -13,311 +13,455 @@ import { createNewAccessTokenWithRefreshToken, createUserTokens } from '../../ut
 import { sendEmail } from '../../utils/sendEmail';
 import { randomOTPGenerator } from '../../utils/randomOTPGenerator';
 import { redisClient } from '../../config/redis.config';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { GoogleIdTokenPayload, GoogleUserInfoPayload } from './auth.interface';
+import axios from 'axios';
 
 const credentialsLogin = async (payload: Partial<IUser>) => {
-    const { email, password } = payload;
-    const isUserExist = await User.findOne({ email });
+  const { email, password } = payload;
+  const isUserExist = await User.findOne({ email });
 
-    if (!isUserExist) {
-        throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
-    }
+  if (!isUserExist) {
+    throw new AppError(httpStatus.BAD_REQUEST, "User does not exist");
+  }
 
-    const IsPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
+  const IsPasswordMatched = await bcryptjs.compare(password as string, isUserExist.password as string)
 
-    if (!IsPasswordMatched) {
-        throw new AppError(httpStatus.BAD_REQUEST, "Password does not matched");
-    }
+  if (!IsPasswordMatched) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Password does not matched");
+  }
 
-    const userTokens = createUserTokens(isUserExist);
+  const userTokens = createUserTokens(isUserExist);
 
 
-    const { password: pass, ...rest } = isUserExist.toObject();
+  const { password: pass, ...rest } = isUserExist.toObject();
 
-    return {
-        accessToken: userTokens.accessToken,
-        refreshToken: userTokens.refreshToken,
-        user: rest
-    }
+  return {
+    accessToken: userTokens.accessToken,
+    refreshToken: userTokens.refreshToken,
+    user: rest
+  }
 }
+
 const getNewAccessToken = async (refreshToken: string) => {
 
-    const newAccessToken = await createNewAccessTokenWithRefreshToken(refreshToken);
+  const newAccessToken = await createNewAccessTokenWithRefreshToken(refreshToken);
 
-    return {
-        accessToken: newAccessToken
-    }
+  return {
+    accessToken: newAccessToken
+  }
 }
 
 // CHANGE PASSWORD
 const changePassword = async (
-    userId: string,
-    oldPassword: string,
-    newPassword: string
+  userId: string,
+  oldPassword: string,
+  newPassword: string
 ) => {
-    const user = await User.findById(userId).select('+password');
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-    }
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
 
-    if (!oldPassword) {
-        throw new AppError(
-            StatusCodes.BAD_REQUEST,
-            'Please provide your old password!'
-        );
-    }
-
-    if (!newPassword) {
-        throw new AppError(
-            StatusCodes.BAD_REQUEST,
-            'Please provide your new password!'
-        );
-    }
-
-    const matchPassword = await bcryptjs.compare(
-        oldPassword,
-        user.password as string
+  if (!oldPassword) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Please provide your old password!'
     );
-    if (!matchPassword) {
-        throw new AppError(StatusCodes.BAD_REQUEST, "Password doesn't matched!");
-    }
+  }
 
-    //   console.log(newPassword);
+  if (!newPassword) {
+    throw new AppError(
+      StatusCodes.BAD_REQUEST,
+      'Please provide your new password!'
+    );
+  }
 
-    user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
-    await user.save();
+  const matchPassword = await bcryptjs.compare(
+    oldPassword,
+    user.password as string
+  );
+  if (!matchPassword) {
+    throw new AppError(StatusCodes.BAD_REQUEST, "Password doesn't matched!");
+  }
 
-    return null;
+  //   console.log(newPassword);
+
+  user.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+  await user.save();
+
+  return null;
 };
 
 // FORGET PASSWORD
 const forgetPassword = async (email: string) => {
-    const user = await User.findOne({ email });
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
-    }
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found!');
+  }
 
-    if (user.isDeleted) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'User was deleted!');
-    }
+  if (user.isDeleted) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User was deleted!');
+  }
 
-    if (
-        user.isActive === IsActive.INACTIVE ||
-        user.isActive === IsActive.BLOCKED
-    ) {
-        throw new AppError(httpStatus.BAD_REQUEST, `User is ${user.isActive}`);
-    }
+  if (
+    user.isActive === IsActive.INACTIVE ||
+    user.isActive === IsActive.BLOCKED
+  ) {
+    throw new AppError(httpStatus.BAD_REQUEST, `User is ${user.isActive}`);
+  }
 
-    const otp = randomOTPGenerator(100000, 999999).toString(); // Generate OTP
-    const hashedOTP = await bcryptjs.hash(otp, Number(envVars.BCRYPT_SALT_ROUND)); // Hashed OTP
+  const otp = randomOTPGenerator(100000, 999999).toString(); // Generate OTP
+  const hashedOTP = await bcryptjs.hash(otp, Number(envVars.BCRYPT_SALT_ROUND)); // Hashed OTP
 
-    // CACHED OTP TO REDIS
-    await redisClient.set(`otp:${user.email}`, hashedOTP, { EX: 120 }); // 2 min
+  // CACHED OTP TO REDIS
+  await redisClient.set(`otp:${user.email}`, hashedOTP, { EX: 120 }); // 2 min
 
-    // SENDING OTP TO EMAIL
-    await sendEmail({
-        to: user.email,
-        subject: 'Near Me: Password Reset OTP',
-        templateName: 'forgetPassword_otp_send',
-        templateData: {
-            name: user.name,
-            expirationTime: 2,
-            otp,
-        },
-    });
+  // SENDING OTP TO EMAIL
+  await sendEmail({
+    to: user.email,
+    subject: 'Near Me: Password Reset OTP',
+    templateName: 'forgetPassword_otp_send',
+    templateData: {
+      name: user.name,
+      expirationTime: 2,
+      otp,
+    },
+  });
 
-    return null;
+  return null;
 };
 
 // VERIFY RESET PASSWORD OTP
 const verifyForgetPasswordOTP = async (email: string, otp: string) => {
-    if (!email) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Email required!');
-    }
+  if (!email) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Email required!');
+  }
 
-    // CHECK USER
-    const user = await User.findOne({ email });
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'No user found!');
-    }
+  // CHECK USER
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No user found!');
+  }
 
-    if (!otp || otp.length < 6) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Wrong OTP!');
-    }
+  if (!otp || otp.length < 6) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Wrong OTP!');
+  }
 
-    // OTP MATCHING PART
-    const getOTP = await redisClient.get(`otp:${email}`);
+  // OTP MATCHING PART
+  const getOTP = await redisClient.get(`otp:${email}`);
 
-    if (!getOTP) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'OTP has expired!');
-    }
+  if (!getOTP) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP has expired!');
+  }
 
-    // Matching otp
-    const isOTPMatched = await bcryptjs.compare(otp, getOTP); // COMPARE WITH OTP
-    if (!isOTPMatched) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'OTP is not matched!');
-    }
+  // Matching otp
+  const isOTPMatched = await bcryptjs.compare(otp, getOTP); // COMPARE WITH OTP
+  if (!isOTPMatched) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'OTP is not matched!');
+  }
 
-    const jwtPayload = { email, verified: true };
-    const jwtToken = jwt.sign(jwtPayload, envVars.OTP_JWT_ACCESS_SECRET, {
-        expiresIn: envVars.OTP_JWT_ACCESS_EXPIRATION,
-    } as SignOptions);
+  const jwtPayload = { email, verified: true };
+  const jwtToken = jwt.sign(jwtPayload, envVars.OTP_JWT_ACCESS_SECRET, {
+    expiresIn: envVars.OTP_JWT_ACCESS_EXPIRATION,
+  } as SignOptions);
 
-    // DELETED OTP AFTER USED
-    await redisClient.del(`otp:${email}`);
-    return jwtToken;
+  // DELETED OTP AFTER USED
+  await redisClient.del(`otp:${email}`);
+  return jwtToken;
 };
 
 // RESET PASSWORD
 const resetPassword = async (token: string, newPassword: string) => {
-    if (!token) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Token must required!');
-    }
+  if (!token) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Token must required!');
+  }
 
-    const verifyToken = jwt.verify(
-        token,
-        envVars.OTP_JWT_ACCESS_SECRET
-    ) as JwtPayload;
+  const verifyToken = jwt.verify(
+    token,
+    envVars.OTP_JWT_ACCESS_SECRET
+  ) as JwtPayload;
 
-    if (!verifyToken) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Invalid token or expired!');
-    }
+  if (!verifyToken) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Invalid token or expired!');
+  }
 
-    if (!verifyToken?.verified) {
-        throw new AppError(httpStatus.BAD_REQUEST, "OTP wasn't verified yet");
-    }
+  if (!verifyToken?.verified) {
+    throw new AppError(httpStatus.BAD_REQUEST, "OTP wasn't verified yet");
+  }
 
-    // CHECK USER
-    const user = await User.findOne({ email: verifyToken?.email });
-    if (!user) {
-        throw new AppError(httpStatus.NOT_FOUND, 'No user found!');
-    }
+  // CHECK USER
+  const user = await User.findOne({ email: verifyToken?.email });
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'No user found!');
+  }
 
-    // SET NEW PASSWORD
-    const hashedPassword = await bcryptjs.hash(
-        newPassword,
-        Number(envVars.BCRYPT_SALT_ROUND)
-    );
+  // SET NEW PASSWORD
+  const hashedPassword = await bcryptjs.hash(
+    newPassword,
+    Number(envVars.BCRYPT_SALT_ROUND)
+  );
 
-    user.password = hashedPassword;
-    await user.save();
+  user.password = hashedPassword;
+  await user.save();
 
-    return null;
+  return null;
+};
+
+// =============================GOOGLE REGISTER/LOGIN HANDLING FOR APPLE (NO REDIRECT SYSTEM)===============
+const googleJWKS = createRemoteJWKSet(
+  new URL('https://www.googleapis.com/oauth2/v3/certs')
+);
+
+const buildGoogleAllowedClientIds = () => {
+  const rawClientIds = [`${envVars.GOOGLE_ANDROID_CLIENT_ID},${envVars.GOOGLE_IOS_CLIENT_ID}`]
+    .join(',')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return new Set(rawClientIds);
 };
 
 
-// const changePassword = async (oldPassword: string, newPassword: string, decodedToken: JwtPayload) => {
+const googleAuthSystem = async (payload: any) => {
+  const roleParam = payload?.role;
+  if (!roleParam || !Object.values(Role).includes(roleParam)) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid or missing role parameter');
+  }
+  if (!payload || typeof payload !== 'object') {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Invalid Google auth payload');
+  }
 
-//     const user = await User.findById(decodedToken.userId);
+  const idToken =
+    typeof payload?.id_token === 'string' ? payload.id_token.trim() : '';
+  const accessToken =
+    typeof payload?.access_token === 'string' ? payload.access_token.trim() : '';
 
-//     const isOldPasswordMatch = await bcryptjs.compare(oldPassword, user!.password as string);
-//     if(!isOldPasswordMatch){
-//         throw new AppError(httpStatus.UNAUTHORIZED, "Old password does not matched")
-//     }
+  if (!idToken) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'Google id_token is required');
+  }
 
-//     user!.password = await bcryptjs.hash(newPassword, Number(envVars.BCRYPT_SALT_ROUND));
+  const googleAllowedClientIds = buildGoogleAllowedClientIds();
+  // const googleAllowedClientIds: string[] = [env.GOOGLE_ANDROID_CLIENT_ID, env.GOOGLE_IOS_CLIENT_ID, env.GOOGLE_WEB_CLIENT_ID as string];
 
-//     user!.save();
+  if (!googleAllowedClientIds.size) {
+    throw new AppError(
+      StatusCodes.INTERNAL_SERVER_ERROR,
+      'Google OAuth client ids are not configured'
+    );
+  }
 
-// }
-// const resetPassword = async (payload: Record<string, any>, decodedToken: JwtPayload) => {
-//     if (payload.id != decodedToken.userId) {
-//         throw new AppError(401, "You can not reset your password")
-//     }
+  let verifiedGooglePayload: GoogleIdTokenPayload;
+  try {
+    const { payload: verifiedPayload } = await jwtVerify(idToken, googleJWKS, {
+      issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    });
 
-//     const isUserExist = await User.findById(decodedToken.userId)
-//     if (!isUserExist) {
-//         throw new AppError(401, "User does not exist")
-//     }
+    verifiedGooglePayload = verifiedPayload as GoogleIdTokenPayload;
+  } catch (error: any) {
+    const reason =
+      envVars.NODE_ENV === 'development' && error?.message
+        ? `: ${error.message}`
+        : '';
 
-//     const hashedPassword = await bcryptjs.hash(
-//         payload.newPassword,
-//         Number(envVars.BCRYPT_SALT_ROUND)
-//     )
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      `Invalid Google id_token${reason}`
+    );
+  }
 
-//     isUserExist.password = hashedPassword;
+  const audienceList = Array.isArray(verifiedGooglePayload.aud)
+    ? verifiedGooglePayload.aud
+      .map((aud) => (typeof aud === 'string' ? aud.trim() : ''))
+      .filter(Boolean)
+    : typeof verifiedGooglePayload.aud === 'string'
+      ? [verifiedGooglePayload.aud.trim()].filter(Boolean)
+      : [];
+  const azp =
+    typeof verifiedGooglePayload.azp === 'string'
+      ? verifiedGooglePayload.azp.trim()
+      : '';
 
-//     await isUserExist.save()
-// }
+  const audienceMatched = audienceList.some((aud) =>
+    googleAllowedClientIds.has(aud)
+  );
+  const azpMatched = azp ? googleAllowedClientIds.has(azp) : false;
 
-// const forgotPassword = async (email: string) => {
-//     const isUserExist = await User.findOne({ email });
+  if (!audienceMatched && !azpMatched) {
+    const reason =
+      envVars.NODE_ENV === 'development'
+        ? ` | aud=${audienceList.join(',') || 'N/A'} | azp=${azp || 'N/A'} | allowed=${Array.from(googleAllowedClientIds).join(',')}`
+        : '';
 
-//     if (!isUserExist) {
-//         throw new AppError(httpStatus.BAD_REQUEST, "User does not exist")
-//     }
-//     if (!isUserExist.isVerified) {
-//         throw new AppError(httpStatus.BAD_REQUEST, "User is not verified")
-//     }
-//     if (isUserExist.isActive === IsActive.BLOCKED || isUserExist.isActive === IsActive.INACTIVE) {
-//         throw new AppError(httpStatus.BAD_REQUEST, `User is ${isUserExist.isActive}`)
-//     }
-//     if (isUserExist.isDeleted) {
-//         throw new AppError(httpStatus.BAD_REQUEST, "User is deleted")
-//     }
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      `Google id_token audience mismatch${reason}`
+    );
+  }
 
-//     const jwtPayload = {
-//         userId: isUserExist._id,
-//         email: isUserExist.email,
-//         role: isUserExist.role
-//     }
+  const googleUserId =
+    typeof verifiedGooglePayload.sub === 'string'
+      ? verifiedGooglePayload.sub.trim()
+      : '';
+  const verifiedEmail =
+    typeof verifiedGooglePayload.email === 'string'
+      ? verifiedGooglePayload.email.toLowerCase().trim()
+      : '';
 
-//     const resetToken = jwt.sign(jwtPayload, envVars.JWT_ACCESS_SECRET, {
-//         expiresIn: "10m"
-//     })
+  if (!googleUserId) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'Google user id not found in token'
+    );
+  }
 
-//     const resetUILink = `${envVars.FRONTEND_URL}/reset-password?id=${isUserExist._id}&token=${resetToken}`
+  if (!verifiedEmail || verifiedGooglePayload.email_verified !== true) {
+    throw new AppError(
+      StatusCodes.UNAUTHORIZED,
+      'Google email is not verified'
+    );
+  }
 
-//     sendEmail({
-//         to: isUserExist.email,
-//         subject: "Password Reset",
-//         templateName: "forgetPassword",
-//         templateData: {
-//             name: isUserExist.name,
-//             resetUILink
-//         }
-//     })
+  const requestEmail =
+    typeof payload?.email === 'string' ? payload.email.toLowerCase().trim() : '';
+  if (requestEmail && requestEmail !== verifiedEmail) {
+    throw new AppError(StatusCodes.UNAUTHORIZED, 'Google payload email mismatch');
+  }
 
-//     /**
-//      * http://localhost:5173/reset-password?id=687f310c724151eb2fcf0c41&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODdmMzEwYzcyNDE1MWViMmZjZjBjNDEiLCJlbWFpbCI6InNhbWluaXNyYXI2QGdtYWlsLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzUzMTY2MTM3LCJleHAiOjE3NTMxNjY3Mzd9.LQgXBmyBpEPpAQyPjDNPL4m2xLF4XomfUPfoxeG0MKg
-//      */
-// }
+  if (accessToken) {
+    try {
+      const { data: googleUserInfo } = await axios.get<GoogleUserInfoPayload>(
+        'https://openidconnect.googleapis.com/v1/userinfo',
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-// const setPassword = async (userId: string, plainPassword: string) => {
-//     const user = await User.findById(userId);
+      const accessTokenSub =
+        typeof googleUserInfo?.sub === 'string'
+          ? googleUserInfo.sub.trim()
+          : '';
+      const accessTokenEmail =
+        typeof googleUserInfo?.email === 'string'
+          ? googleUserInfo.email.toLowerCase().trim()
+          : '';
 
-//     if (!user) {
-//         throw new AppError(404, "User not found");
-//     }
+      if (!accessTokenSub || accessTokenSub !== googleUserId) {
+        throw new AppError(StatusCodes.UNAUTHORIZED, 'Google token mismatch');
+      }
 
-//     if (user.password && user.auths.some(providerObject => providerObject.provider === "google")) {
-//         throw new AppError(httpStatus.BAD_REQUEST, "You have already set your password. Now you can change the password from your profile password update")
-//     }
+      if (accessTokenEmail && accessTokenEmail !== verifiedEmail) {
+        throw new AppError(
+          StatusCodes.UNAUTHORIZED,
+          'Google token email mismatch'
+        );
+      }
 
-//     const hashedPassword = await bcryptjs.hash(
-//         plainPassword,
-//         Number(envVars.BCRYPT_SALT_ROUND)
-//     )
+      if (googleUserInfo.email_verified === false) {
+        throw new AppError(
+          StatusCodes.UNAUTHORIZED,
+          'Google access token email is not verified'
+        );
+      }
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
 
-//     const credentialProvider: IAuthProvider = {
-//         provider: "credentials",
-//         providerId: user.email
-//     }
+      if (axios.isAxiosError(error)) {
+        throw new AppError(
+          StatusCodes.UNAUTHORIZED,
+          'Google access_token validation failed'
+        );
+      }
 
-//     const auths: IAuthProvider[] = [...user.auths, credentialProvider]
+      throw error;
+    }
+  }
 
-//     user.password = hashedPassword
+  const fallbackName = verifiedEmail.split('@')[0] || 'Google User';
+  const providerName =
+    typeof verifiedGooglePayload.name === 'string'
+      ? verifiedGooglePayload.name.trim()
+      : '';
+  const requestName =
+    typeof payload?.name === 'string' ? payload.name.trim() : '';
+  const userName = providerName || requestName || fallbackName;
 
-//     user.auths = auths
+  // eslint-disable-next-line no-useless-assignment
+  let user = null;
+  try {
+    user = await User.findOneAndUpdate(
+      {
+        email: verifiedEmail,
+        $or: [
+          { auths: { $not: { $elemMatch: { provider: 'google' } } } },
+          { auths: { $elemMatch: { provider: 'google', providerId: googleUserId } } },
+        ],
+      },
+      {
+        $set: {
+          isVerified: true,
+        },
+        $addToSet: {
+          auths: {
+            provider: 'google',
+            providerId: googleUserId,
+          },
+        },
+        $setOnInsert: {
+          user_name: userName,
+          email: verifiedEmail,
+          role: roleParam as Role,
+        },
+      },
+      { upsert: true, new: true }
+    );
+  } catch (error: any) {
+    if (error?.code === 11000) {
+      throw new AppError(
+        StatusCodes.UNAUTHORIZED,
+        'Google account mismatch for this email'
+      );
+    }
+    throw error;
+  }
 
-//     await user.save()
+  if (!user) {
+    throw new AppError(StatusCodes.INTERNAL_SERVER_ERROR, 'Authentication failed');
+  }
 
-// }
+  if (user.isDeleted) {
+    throw new AppError(StatusCodes.BAD_REQUEST, 'User was deleted!');
+  }
+
+  if (
+    user.isActive === IsActive.INACTIVE ||
+    user.isActive === IsActive.BLOCKED
+  ) {
+    throw new AppError(StatusCodes.BAD_REQUEST, `User is ${user.isActive}`);
+  }
+
+  const userTokens = await createUserTokens({
+    _id: user._id,
+    email: user.email,
+    role: user.role
+  });
+
+  return {
+    accessToken: userTokens.accessToken,
+    refreshToken: userTokens.refreshToken,
+  };
+};
 
 export const AuthServices = {
-    credentialsLogin,
-    getNewAccessToken,
-    changePassword,
-    resetPassword,
-    forgetPassword,
-    verifyForgetPasswordOTP,
+  credentialsLogin,
+  getNewAccessToken,
+  changePassword,
+  resetPassword,
+  forgetPassword,
+  verifyForgetPasswordOTP,
+  googleAuthSystem
 }

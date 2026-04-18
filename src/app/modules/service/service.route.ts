@@ -28,10 +28,11 @@ router.get(
   ServiceControllers.getAllServices
 );
 
-router.get("/:id", ServiceControllers.getSingleService);
-
 // Route to get nearest services
 router.post("/nearest", ServiceControllers.getNearestServices);
+router.get("/search", ServiceControllers.searchServices);
+
+router.get("/:id", ServiceControllers.getSingleService);
 
 router.patch(
   "/:id",
