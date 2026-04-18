@@ -6,6 +6,17 @@ export interface ILocation {
   address?: string;
 }
 
+export interface GetServicesByCategoryParams {
+  categoryId: string;
+  lon: string;
+  lat: string;
+  offerServiceIds?: string[]; // specific sub/child category IDs from checkbox selection
+  searchTerm?: string;
+  minRating?: number;
+  radius?: number;          // miles
+  availability?: boolean;   // true = open now only
+}
+
 export interface IService {
     id?: Types.ObjectId;
     provider?: Types.ObjectId;

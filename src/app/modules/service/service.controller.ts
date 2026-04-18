@@ -67,7 +67,6 @@ const getSingleService = catchAsync(
 // Controller to get nearest services based on user location
 const getNearestServices = catchAsync(async (req: Request, res: Response) => {
   const { lon, lat, minRating, radius, categories } = req.body;
-  // categories can be: "id1" or ["id1", "id2", "id3"]
 
   const services = await ServiceServices.getNearestServices(
     lon,
@@ -109,6 +108,72 @@ const searchServices = catchAsync(async (req: Request, res: Response) => {
     meta: { total: result.total, showing: result.showing },
   });
 });
+
+/**
+ * POST /services/by-category
+ *
+ * Powers the RIGHT PANEL of page 2.
+ *
+ * Body:
+ * {
+ *   categoryId:      string         ← required. The root/sub/child category ID clicked.
+ *   lon:             string         ← required. User longitude.
+ *   lat:             string         ← required. User latitude.
+ *
+ *   // ── optional filters ──────────────────────────────────────────────────
+ *   offerServiceIds: string[]       ← specific sub/child category IDs selected via checkboxes.
+ *                                     If omitted → all descendants are included.
+ *   searchTerm:      string         ← free-text search on service_name.
+ *   minRating:       number         ← e.g. 4.0
+ *   radius:          number         ← in miles (default 10)
+ *   availability:    boolean        ← true = show only currently open services
+ * }
+ *
+ * Response data shape (each item):
+ * {
+ *   _id, service_name, company_logo, coordinates,
+ *   distanceInMiles, averageRating, totalReviews, isAvailableNow,
+ *   provider: { planName, badgeType, priorityScore }
+ * }
+ */
+const getServicesByCategory = catchAsync(
+  async (req: Request, res: Response) => {
+    const {
+      categoryId,
+      lon,
+      lat,
+      offerServiceIds,
+      searchTerm,
+      minRating,
+      radius,
+      availability,
+    } = req.body;
+
+    if (!categoryId) {
+      throw new AppError(httpStatus.BAD_REQUEST, "categoryId is required");
+    }
+
+    const result = await ServiceServices.getServicesByCategory({
+      categoryId,
+      lon,
+      lat,
+      offerServiceIds,
+      searchTerm,
+      minRating: minRating ? parseFloat(minRating) : undefined,
+      radius: radius ? parseFloat(radius) : undefined,
+      availability:
+        availability !== undefined ? availability === true || availability === "true" : undefined,
+    });
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Services retrieved successfully",
+      data: result.data,
+      meta: { total: result.total },
+    });
+  }
+);
 
 const updateService = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
@@ -161,6 +226,7 @@ export const ServiceControllers = {
   getAllServices,
   getNearestServices,
   searchServices,
+  getServicesByCategory,
   updateService,
   getSingleService,
   deleteService,

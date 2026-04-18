@@ -96,7 +96,7 @@ const updateUserLocation = async (
 
 
 const verifyUserService = async (email: string, otp: string) => {
-    console.log(otp, email)
+    // console.log(otp, email)
     if (!email || !otp) {
         throw new AppError(400, 'OTP required!');
     }
@@ -105,7 +105,7 @@ const verifyUserService = async (email: string, otp: string) => {
     if (!isUser) {
         throw new AppError(400, 'User not found by this email!');
     }
-    console.log("this is the otp",isUser.otp, otp)
+    // console.log("this is the otp",isUser.otp, otp)
     if (isUser.otp !== otp || otp.length < 4) {
         throw new AppError(400, 'Invalid OTP!');
     }

@@ -28,9 +28,30 @@ router.get(
   ServiceControllers.getAllServices
 );
 
-// Route to get nearest services
+// Nearest services (geo-based)
 router.post("/nearest", ServiceControllers.getNearestServices);
+
+// Global search by service name
 router.get("/search", ServiceControllers.searchServices);
+
+/**
+ * POST /services/by-category
+ *
+ * Powers page 2 right panel — returns services under a category tree.
+ *
+ * Body:
+ * {
+ *   categoryId:      string        ← required
+ *   lon:             string        ← required
+ *   lat:             string        ← required
+ *   offerServiceIds: string[]      ← optional. Specific sub/child IDs from checkboxes.
+ *   searchTerm:      string        ← optional. Filter by service name.
+ *   minRating:       number        ← optional. e.g. 4.0
+ *   radius:          number        ← optional. Miles. Default: no radius cap.
+ *   availability:    boolean       ← optional. true = open now only.
+ * }
+ */
+router.post("/by-category", ServiceControllers.getServicesByCategory);
 
 router.get("/:id", ServiceControllers.getSingleService);
 
@@ -38,13 +59,17 @@ router.patch(
   "/:id",
   checkAuth(Role.PROVIDER),
   multerUpload.fields([
-    { name: "media"},
+    { name: "media" },
     { name: "company_logo", maxCount: 1 },
   ]),
   validateRequest(updateServiceZodSchema),
   ServiceControllers.updateService
 );
 
-router.delete("/:id", checkAuth(Role.PROVIDER), ServiceControllers.deleteService);
+router.delete(
+  "/:id",
+  checkAuth(Role.PROVIDER),
+  ServiceControllers.deleteService
+);
 
 export const ServiceRoutes = router;

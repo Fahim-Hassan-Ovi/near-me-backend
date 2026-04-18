@@ -14,14 +14,14 @@ import passport from "passport";
 
 const credentialsLogin = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     passport.authenticate("local", async (err: any, user: any, info: any) => {
-        console.log(err)
+        // console.log(err)
         if (err) {
-            console.log("from err", err)
+            // console.log("from err", err)
             return next(new AppError(err.statusCode || 401, err.message));
         }
 
         if (!user) {
-            console.log("from !user", err)
+            // console.log("from !user", err)
             return next(new AppError(401, info.message));
         }
 
