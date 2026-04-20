@@ -16,6 +16,10 @@ export const buildServiceMeta = (
     service_name: service.service_name,
     company_logo: service.company_logo,
     coordinates: service.location.coordinates,
+    openingTime: service.openingTime,
+    closingTime: service.closingTime,
+    allTimeAvailability: service.allTimeAvailability,
+    service_address: service.service_address,
     provider: {
       planName: service.provider?.subscriptionInfo?.planName ?? "free",
       badgeType: service.provider?.subscriptionInfo?.badgeType ?? "none",

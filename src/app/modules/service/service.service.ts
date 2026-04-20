@@ -38,7 +38,7 @@ const aggregateRatings = async (serviceIds: any[]) => {
 
 // ─── Shared: slim select + provider populate ──────────────────────────────────
 const SERVICE_SELECT =
-  "_id service_name company_logo location openingTime closingTime allTimeAvailability";
+  "_id service_name company_logo location openingTime closingTime allTimeAvailability service_address";
 const PROVIDER_SELECT =
   "subscriptionInfo.planName subscriptionInfo.badgeType subscriptionInfo.priorityScore";
 
