@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status-codes";
 import { Service } from "./service.model";
@@ -13,6 +14,7 @@ import { Review } from "../review/review.model";
 import { buildServiceMeta } from "../../utils/getNearestServicesHelper/buildServiceMeta";
 import { buildGeoQuery } from "../../utils/getNearestServicesHelper/getNearestServicesQuery";
 import { getAllDescendantCategoryIds } from "../category/category.service";
+import { ServiceAnalytics } from "../serviceAnalytics/serviceAnalytics.model";
 
 // ─── Shared: aggregate ratings for a list of serviceIds ───────────────────────
 const aggregateRatings = async (serviceIds: any[]) => {
@@ -114,6 +116,9 @@ const getSingleService = async (id: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Service is not found");
   }
 
+  // Fire-and-forget view tracking
+  ServiceAnalytics.create({ service: service._id, type: 'view' }).catch(() => {});
+
   return service;
 };
 
@@ -150,6 +155,14 @@ const getNearestServices = async (
   }
 
   result.sort((a, b) => b.provider.priorityScore - a.provider.priorityScore);
+
+  if (result.length > 0) {
+    ServiceAnalytics.insertMany(
+      result.map((s) => ({ service: s._id, type: 'impression' })),
+      { ordered: false }
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+    ).catch(() => { }); // fire-and-forget, never block the response
+  }
 
   return result;
 };
@@ -294,6 +307,13 @@ const getServicesByCategory = async ({
 
   // ── Step 7: Sort by subscription priority ────────────────────────────────
   result.sort((a, b) => b.provider.priorityScore - a.provider.priorityScore);
+
+  if (result.length > 0) {
+    ServiceAnalytics.insertMany(
+      result.map((s) => ({ service: s._id, type: 'impression' })),
+      { ordered: false }
+    ).catch(() => { }); // fire-and-forget
+  }
 
   return { data: result, total: result.length };
 };

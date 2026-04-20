@@ -10,6 +10,7 @@ import { MessageRoutes } from "../modules/message/message.route"
 import { StaticPageRoutes } from "../modules/static_pages/static_pages.route"
 import { PlanRoutes } from "../modules/plan/plan.route"
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route"
+import { ServiceAnalyticsRoutes } from "../modules/serviceAnalytics/serviceAnalytics.routes"
 
 
 export const router = Router()
@@ -58,6 +59,10 @@ const moduleRoutes = [
   {
     path: "/subscriptions",
     route: SubscriptionRoutes,
+  },
+  {
+    path: "/analytics",
+    route: ServiceAnalyticsRoutes,
   }
 
 ]
