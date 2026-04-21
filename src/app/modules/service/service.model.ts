@@ -32,6 +32,12 @@ const serviceSchema = new Schema<IService>({
     ref: "Category",
     required: true
   },
+  highlight_services: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "HighlightService",
+    },
+  ],
   offer_services: [
     {
       type: Schema.Types.ObjectId,

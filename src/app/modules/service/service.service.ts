@@ -110,7 +110,9 @@ const getSingleService = async (id: string) => {
   const service = await Service.findById(id)
     .populate("service_category")
     .populate("offer_services")
-    .populate("provider", "name email subscriptionInfo");
+    .populate("provider", "name email subscriptionInfo")
+    .populate("highlight_services");     // Populate the highlight_services
+    
 
   if (!service) {
     throw new AppError(httpStatus.NOT_FOUND, "Service is not found");

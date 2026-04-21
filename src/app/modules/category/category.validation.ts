@@ -31,6 +31,10 @@ export const createCategoryZodSchema = z.object({
     .string()
     .min(2, { message: "Category name must be at least 2 characters" })
     .max(100, { message: "Category name cannot exceed 100 characters" }),
+  
+  image: z
+    .string()
+    .optional(),
 
   parent: objectIdSchema.optional(),
 

@@ -5,6 +5,8 @@ const categorySchema = new Schema<ICategory>(
   {
     name: { type: String, required: true },
 
+    image: { type: String, required: false },
+
     parent: {
       type: Schema.Types.ObjectId,
       ref: "Category",

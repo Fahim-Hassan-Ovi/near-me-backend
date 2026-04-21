@@ -1,10 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { NextFunction, Request, Response } from "express";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { CategoryServices } from "./category.service";
 import httpStatus from "http-status-codes";
+import { ICategory } from "./category.interface";
 
-const createCategory = catchAsync(async (req, res) => {
-  const result = await CategoryServices.createCategory(req.body);
+const createCategory = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
+console.log("this is from createCategory:",req.body);
+  const payload: ICategory = {
+    ...req.body,
+    image: req.file?.path || ""
+  }
+  const result = await CategoryServices.createCategory(payload);
 
   sendResponse(res, {
     success: true,
@@ -14,7 +22,7 @@ const createCategory = catchAsync(async (req, res) => {
   });
 });
 
-const getCategoryTree = catchAsync(async (req, res) => {
+const getCategoryTree = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
   const result = await CategoryServices.getCategoryTree();
 
   sendResponse(res, {
@@ -25,7 +33,7 @@ const getCategoryTree = catchAsync(async (req, res) => {
   });
 });
 
-const approveCategory = catchAsync(async (req, res) => {
+const approveCategory = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
   const result = await CategoryServices.approveCategory(req.params.id as string);
 
   sendResponse(res, {
@@ -45,7 +53,7 @@ const approveCategory = catchAsync(async (req, res) => {
  *   level=2  → child categories only
  * Omit level to search across all levels (page-2 search)
  */
-const searchCategories = catchAsync(async (req, res) => {
+const searchCategories = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
   const { searchTerm, level } = req.query;
 
   const result = await CategoryServices.searchCategories(
@@ -67,7 +75,7 @@ const searchCategories = catchAsync(async (req, res) => {
  * Returns the full sub-tree (children + grandchildren) of a given category.
  * Used to populate the left panel on page-2 (sub-categories + child categories).
  */
-const getCategorySubTree = catchAsync(async (req, res) => {
+const getCategorySubTree = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
   const result = await CategoryServices.getCategorySubTree(
     req.params.id as string
   );
@@ -80,10 +88,28 @@ const getCategorySubTree = catchAsync(async (req, res) => {
   });
 });
 
+const updateCategory = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const id = req.params.id as string;
+  const payload: ICategory = {
+    ...req.body,
+    image: req.file?.path || req.body.image  // If no new image is provided, keep the existing image
+  };
+
+  const result = await CategoryServices.updateCategory(id, payload);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Category updated successfully",
+    data: result,
+  });
+});
+
 export const CategoryControllers = {
   createCategory,
   getCategoryTree,
   approveCategory,
   searchCategories,
-  getCategorySubTree
+  getCategorySubTree,
+  updateCategory
 };

@@ -2,9 +2,11 @@
 import { Category } from "./category.model";
 import AppError from "../../errorHelpers/AppError";
 import httpStatus from "http-status-codes";
+import { ICategory } from "./category.interface";
+import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
 
 const createCategory = async (payload: any) => {
-  const { name, parent, isCustom } = payload;
+  const { name, parent, isCustom, image } = payload;
 
   let level: 0 | 1 | 2 = 0;
 
@@ -32,6 +34,7 @@ const createCategory = async (payload: any) => {
     level,
     isCustom: isCustom || false,
     isApproved: !isCustom, // custom = pending
+    image: image || ""
   });
 
   return category;
@@ -186,10 +189,32 @@ export const getAllDescendantCategoryIds = async (
   return ids;
 };
 
+const updateCategory = async (id: string, payload: Partial<ICategory>) => {
+
+    const category = await Category.findById(id);
+
+    if (!category) {
+        throw new AppError(httpStatus.NOT_FOUND, "Category not found");
+    }
+
+    const updatedCategory = await Category.findByIdAndUpdate(
+        id,
+        payload,
+        { new: true, runValidators: true }
+    );
+
+    if (payload.image && category.image) {
+        await deleteImageFromCLoudinary(category.image)
+    }
+
+    return updatedCategory;
+};
+
 export const CategoryServices = {
   createCategory,
   getCategoryTree,
   approveCategory,
   searchCategories,
-  getCategorySubTree
+  getCategorySubTree,
+  updateCategory
 };

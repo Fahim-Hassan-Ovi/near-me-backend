@@ -5,6 +5,7 @@ import { HighlightServiceServices } from "./highlight_service.service";
 import { catchAsync } from "../../utils/catchAsync";
 import { sendResponse } from "../../utils/sendResponse";
 import { IHighlightService } from "./highlight_service.interface";
+import { Service } from "../service/service.model";
 
 const createHighlight = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const payload: IHighlightService = {
@@ -12,14 +13,20 @@ const createHighlight = catchAsync(async (req: Request, res: Response, next: Nex
         image: req.file?.path
     }
 
-    const result = await HighlightServiceServices.createHighlight(payload);
+    const highlight = await HighlightServiceServices.createHighlight(payload);
+
+    // Update the corresponding service to include the new highlight
+    const serviceId = req.body.service;  // Assuming service ID is passed in the payload
+    await Service.findByIdAndUpdate(serviceId, {
+        $push: { highlight_services: highlight._id }
+    });
 
     sendResponse(res, {
         success: true,
         statusCode: httpStatus.CREATED,
-        message: "Highlight created successfully",
-        data: result
-    })
+        message: "Highlight created successfully and added to service",
+        data: highlight,
+    });
 });
 
 const getHighlightsByService = catchAsync(async (req: Request, res: Response) => {
