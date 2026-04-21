@@ -11,6 +11,7 @@ import { StaticPageRoutes } from "../modules/static_pages/static_pages.route"
 import { PlanRoutes } from "../modules/plan/plan.route"
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route"
 import { ServiceAnalyticsRoutes } from "../modules/serviceAnalytics/serviceAnalytics.routes"
+import { paymentRouter } from "../modules/payment/payment.route"
 
 
 export const router = Router()
@@ -63,6 +64,10 @@ const moduleRoutes = [
   {
     path: "/analytics",
     route: ServiceAnalyticsRoutes,
+  },
+  {
+    path: "/payments",
+    route: paymentRouter,
   }
 
 ]

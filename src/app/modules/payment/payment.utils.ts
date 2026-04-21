@@ -8,5 +8,5 @@ import { v4 as uuidv4 } from "uuid";
 export const generateTransactionId = (): string => {
   const timestamp = Date.now();
   const random = uuidv4().replace(/-/g, "").slice(0, 8).toUpperCase();
-  return `TXN-${timestamp}-${random}`;
+  return `txn-${timestamp}-${random}`;
 };

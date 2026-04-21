@@ -9,27 +9,51 @@ import { IService } from "./service.interface";
 import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errorHelpers/AppError";
 
+/**
+ * POST /service/create
+ *
+ * Body (multipart/form-data):
+ *   - All IService fields
+ *   - planId: string   ← the selected plan's _id
+ *
+ * Response variants:
+ *   Free plan  → { data: { free: true } }
+ *   Paid plan  → { data: { checkout_url: "https://..." } }
+ *
+ * The frontend should check `data.free`:
+ *   - true            → redirect to dashboard / success page immediately
+ *   - false/undefined → redirect to data.checkout_url (Stripe checkout)
+ */
 const createService = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
-
+ 
   const files = req.files as {
     media?: Express.Multer.File[];
     company_logo?: Express.Multer.File[];
   };
-
-  const payload: IService = {
+ 
+  const payload: Partial<IService> & { planId: string } = {
     ...req.body,
     media: files?.media?.map((file) => file.path) || [],
     company_logo: files?.company_logo?.[0]?.path || "",
   };
-
-  const service = await ServiceServices.createService(payload, user.userId);
-
-  sendResponse(res, {
+ 
+  const result = await ServiceServices.createService(payload, user.userId);
+ 
+  if ("free" in result) {
+    return sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: "Service created and free plan activated successfully",
+      data: result, // { free: true }
+    });
+  }
+ 
+  return sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
-    message: "Service created successfully",
-    data: service,
+    message: "Service created. Redirecting to payment...",
+    data: result, // { checkout_url: "https://checkout.stripe.com/..." }
   });
 });
 

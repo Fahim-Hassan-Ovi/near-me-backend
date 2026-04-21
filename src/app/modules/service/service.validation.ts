@@ -7,6 +7,11 @@ const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, { message: "Invalid ObjectId format" });
 
+  /**
+ * Subscription Status Enum
+ */
+const subscriptionStatusEnum = z.enum(["active", "inactive", "expired"]);
+
 /**
  * Location Validation
  */
@@ -89,6 +94,16 @@ export const createServiceZodSchema = z.object({
     .regex(timeRegex, { message: "Closing time must be in HH:mm format" }),
 
   allTimeAvailability: z.boolean(),
+
+  // ── Subscription fields (OPTIONAL on create) ──
+  activePlan: objectIdSchema.optional(),
+
+  subscriptionStatus: subscriptionStatusEnum.optional(),
+
+  subscriptionExpiresAt: z
+    .union([z.string().datetime(), z.date()])
+    .nullable()
+    .optional(),
 });
 
 /**

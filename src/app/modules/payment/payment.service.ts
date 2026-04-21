@@ -4,8 +4,7 @@ import { Request } from "express";
 import Stripe from "stripe";
 import { StatusCodes } from "http-status-codes";
 
-import { JwtPayload } from "../../types"; // adjust to your jwt payload type path
-import { AppError } from "../../errors/AppError"; // adjust to your AppError path
+
 import { envVars } from "../../config/env"; // adjust to your env config path
 import { Role } from "../user/user.interface";
 
@@ -14,13 +13,13 @@ import { PaymentProvider, PaymentStatus } from "./payment.interface";
 import { generateTransactionId } from "./payment.utils";
 import { Plan } from "../plan/plan.model";
 import { Service } from "../service/service.model";
+import { JwtPayload } from "jsonwebtoken";
+import AppError from "../../errorHelpers/AppError";
 
 /* ------------------------------------------------------------------ */
 /*  Stripe client                                                       */
 /* ------------------------------------------------------------------ */
-const stripe = new Stripe(envVars.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-04-10",
-});
+const stripe = new Stripe(envVars.STRIPE_SECRET_KEY as string);
 
 /* ================================================================== */
 /*  WEBHOOK HELPERS                                                    */
@@ -97,6 +96,7 @@ const handleFreePlan = async (
   try {
     session.startTransaction();
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const payment = await PaymentModel.create(
       [
         {
@@ -231,7 +231,7 @@ const stripePay = async (
   /* ---------- STRIPE CHECKOUT SESSION ---------- */
   const amountInCents = Math.round(plan.price * 100);
 
-  const stripePayload: Stripe.Checkout.SessionCreateParams = {
+  const stripePayload = {
     payment_method_types: ["card"],
     line_items: [
       {
@@ -245,7 +245,7 @@ const stripePay = async (
         quantity: 1,
       },
     ],
-    mode: "payment",
+    mode: "payment"  as const,
     // Session expires in 30 minutes
     expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
     metadata: {
@@ -299,7 +299,7 @@ const stripePay = async (
 const stripeWebhookHandling = async (req: Request): Promise<{ received: true }> => {
   const signature = req.headers["stripe-signature"] as string;
 
-  let event: Stripe.Event;
+  let event: any;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -326,6 +326,7 @@ const stripeWebhookHandling = async (req: Request): Promise<{ received: true }> 
     // User let the session expire without paying
     case "checkout.session.expired":
     // Card was declined or otherwise failed
+    // eslint-disable-next-line no-fallthrough
     case "payment_intent.payment_failed": {
       const session = event.data.object as Stripe.Checkout.Session;
       await paymentFailedHandler(session);

@@ -62,6 +62,8 @@ interface EnvConfig {
     AUTH_PROVIDER_X509_CERT_URL: string;
     CLIENT_X509_CERT_URL: string;
     UNIVERSE_DOMAIN: string;
+    STRIPE_SECRET_KEY: string;
+    STRIPE_WEBHOOK_SECRET: string;
 
 
 }
@@ -99,7 +101,9 @@ const loadEnvVariables = (): EnvConfig => {
         'TOKEN_URI',
         'AUTH_PROVIDER_X509_CERT_URL',
         'CLIENT_X509_CERT_URL',
-        'UNIVERSE_DOMAIN'
+        'UNIVERSE_DOMAIN',
+        'STRIPE_SECRET_KEY',
+        'STRIPE_WEBHOOK_SECRET'
     ];
 
     requiredEnvVariables.forEach(key => {
@@ -169,7 +173,9 @@ const loadEnvVariables = (): EnvConfig => {
         AUTH_PROVIDER_X509_CERT_URL: process.env
             .AUTH_PROVIDER_X509_CERT_URL as string,
         CLIENT_X509_CERT_URL: process.env.CLIENT_X509_CERT_URL as string,
-        UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string
+        UNIVERSE_DOMAIN: process.env.UNIVERSE_DOMAIN as string,
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY as string,
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET as string
 
     }
 }

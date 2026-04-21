@@ -15,6 +15,9 @@ import { buildServiceMeta } from "../../utils/getNearestServicesHelper/buildServ
 import { buildGeoQuery } from "../../utils/getNearestServicesHelper/getNearestServicesQuery";
 import { getAllDescendantCategoryIds } from "../category/category.service";
 import { ServiceAnalytics } from "../serviceAnalytics/serviceAnalytics.model";
+import { Plan } from "../plan/plan.model";
+import { JwtPayload } from "jsonwebtoken";
+import { paymentService } from "../payment/payment.service";
 
 // ─── Shared: aggregate ratings for a list of serviceIds ───────────────────────
 const aggregateRatings = async (serviceIds: any[]) => {
@@ -44,36 +47,74 @@ const SERVICE_SELECT =
 const PROVIDER_SELECT =
   "subscriptionInfo.planName subscriptionInfo.badgeType subscriptionInfo.priorityScore";
 
-const createService = async (payload: Partial<IService>, userId: string) => {
+/* ------------------------------------------------------------------ */
+/*  CREATE SERVICE + INITIATE PLAN PAYMENT                            */
+/* ------------------------------------------------------------------ */
+ 
+/**
+ * Creates the service document, links it to the user, then initiates
+ * plan payment.
+ *
+ * - Free plan  → payment is immediately marked PAID, returns { free: true }
+ * - Paid plan  → returns { checkout_url } for the frontend to redirect
+ *
+ * The frontend should:
+ *   if (data.free)       → redirect to /dashboard (or success page)
+ *   if (data.checkout_url) → window.location.href = data.checkout_url
+ */
+const createService = async (
+  payload: Partial<IService> & { planId: string },
+  userId: string
+): Promise<{ free: true } | { checkout_url: string | null }> => {
+  /* ── 1. Guard: one service per provider ── */
   const existingService = await Service.findOne({ provider: userId });
-
   if (existingService) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
-      "A provider can create only one shop"
+      "A provider can only create one service"
     );
   }
-
+ 
+  /* ── 2. Validate the chosen plan ── */
+  const plan = await Plan.findById(payload.planId);
+  if (!plan || !plan.isActive) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Invalid or inactive plan selected");
+  }
+ 
+  /* ── 3. Enforce feature limits based on the chosen plan ── */
   const offerServicesCount = payload.offer_services?.length || 0;
   await enforceOfferServicesLimit(userId, offerServicesCount);
-
+ 
   const incomingPhotosCount = payload.media?.length || 0;
   await enforcePhotoLimit(userId, 0, incomingPhotosCount);
-
+ 
+  /* ── 4. Create the service (subscription fields default to inactive) ── */
+  const { planId, ...serviceData } = payload;
+ 
   const service = await Service.create({
-    ...payload,
+    ...serviceData,
     provider: userId,
+    subscriptionStatus: "inactive", // will be updated after payment
   });
-
-  await User.findByIdAndUpdate(
-    userId,
-    { service: service._id },
-    { returnDocument: "after" }
+ 
+  /* ── 5. Link service to user ── */
+  await User.findByIdAndUpdate(userId, {
+    service: service._id,
+    hasService: true,
+  });
+ 
+  /* ── 6. Initiate payment (free = auto-activate, paid = Stripe) ── */
+  // We build a fake JwtPayload-like object because paymentService.stripePay
+  // expects one. Adjust if your JwtPayload shape differs.
+  const userJwt: JwtPayload = { userId, role: "PROVIDER" } as JwtPayload;
+ 
+  const paymentResult = await paymentService.stripePay(
+    userJwt,
+    service._id.toString(),
+    planId
   );
-
-  await User.findByIdAndUpdate(userId, { hasService: true });
-
-  return service;
+ 
+  return paymentResult;
 };
 
 const getAllServices = async (query: Record<string, string>) => {

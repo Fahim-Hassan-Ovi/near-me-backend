@@ -10,10 +10,18 @@ import "./app/config/passport";
 import expressSession from 'express-session';
 import { envVars } from './app/config/env';
 import { initSocket } from './app/socket';
+import { paymentControllers } from './app/modules/payment/payment.controller';
 
 const app = express();
 
 const server = http.createServer(app);
+
+// Stripe webhook must stay before express.json()
+app.post(
+  '/payment/stripe_webhook',
+  express.raw({ type: 'application/json' }),
+  paymentControllers.stripeWebhook
+);
 
 // Init Socket connection
 initSocket(server);
@@ -28,6 +36,9 @@ app.use(expressSession({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(cookieParser());
+
+// app.use('/payment/stripe_webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.set("trust proxy", 1);
 app.use(express.urlencoded({extended: true}))
