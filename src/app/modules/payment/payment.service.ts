@@ -30,7 +30,7 @@ const stripe = new Stripe(envVars.STRIPE_SECRET_KEY as string);
  * Marks the payment as PAID and activates the plan on the service.
  */
 const paymentSuccessHandler = async (
-  session: Stripe.Checkout.Session
+  session: any
 ): Promise<void> => {
   const { payment: paymentId, service: serviceId, plan: planId } =
     session.metadata as {
@@ -65,7 +65,7 @@ const paymentSuccessHandler = async (
  * Marks the payment as FAILED.
  */
 const paymentFailedHandler = async (
-  session: Stripe.Checkout.Session
+  session: any
 ): Promise<void> => {
   const { payment: paymentId } = session.metadata as { payment: string };
 
@@ -232,7 +232,7 @@ const stripePay = async (
   const amountInCents = Math.round(plan.price * 100);
 
   const stripePayload = {
-    payment_method_types: ["card"],
+    payment_method_types: ["card"] as any,
     line_items: [
       {
         price_data: {
@@ -318,7 +318,7 @@ const stripeWebhookHandling = async (req: Request): Promise<{ received: true }> 
   switch (event.type) {
     // Payment completed successfully
     case "checkout.session.completed": {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object as any;
       await paymentSuccessHandler(session);
       break;
     }
@@ -328,7 +328,7 @@ const stripeWebhookHandling = async (req: Request): Promise<{ received: true }> 
     // Card was declined or otherwise failed
     // eslint-disable-next-line no-fallthrough
     case "payment_intent.payment_failed": {
-      const session = event.data.object as Stripe.Checkout.Session;
+      const session = event.data.object as any;
       await paymentFailedHandler(session);
       break;
     }

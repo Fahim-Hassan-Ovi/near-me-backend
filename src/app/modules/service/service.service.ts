@@ -159,6 +159,19 @@ const getSingleService = async (id: string) => {
     throw new AppError(httpStatus.NOT_FOUND, "Service is not found");
   }
 
+  // Calculate and update average rating
+  const ratingMap = await aggregateRatings([service._id]);
+  const ratingData = ratingMap.get(service._id.toString());
+  
+  if (ratingData) {
+    service.averageRating = parseFloat(ratingData.averageRating.toFixed(1));
+    await Service.findByIdAndUpdate(
+      service._id,
+      { averageRating: service.averageRating },
+      { new: false }
+    );
+  }
+
   // Fire-and-forget view tracking
   ServiceAnalytics.create({ service: service._id, type: 'view' }).catch(() => {});
 

@@ -41,4 +41,7 @@ export interface IService {
   activePlan?: Types.ObjectId;            // ref → Plan
   subscriptionStatus?: SubscriptionStatus;
   subscriptionExpiresAt?: Date | null;    // null = free plan (never expires)
+
+  // ── Rating ───────────────────────────────────────────────────────
+  averageRating?: number;                 // avg rating from reviews (0-5)
 }

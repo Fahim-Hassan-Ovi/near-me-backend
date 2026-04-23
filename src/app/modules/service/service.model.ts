@@ -71,6 +71,14 @@ const serviceSchema = new Schema<IService>(
       type: Date,
       default: null, // null = free plan / not yet paid
     },
+
+    // ── Rating ───────────────────────────────────────────────────────
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
   },
   { timestamps: true, versionKey: false }
 );

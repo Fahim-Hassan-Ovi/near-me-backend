@@ -2,6 +2,37 @@
 import { IReview } from "./review.interface";
 import { Review } from "./review.model";
 import { enforceReviewReplyPermission } from "../../utils/subscriptionHelper/enforceReviewReplyPermission";
+import { Service } from "../service/service.model";
+
+// ─── Update service average rating ────────────────────────────────────────────
+const updateServiceAverageRating = async (serviceId: string) => {
+  const ratingAggregates = await Review.aggregate([
+    {
+      $match: {
+        service: serviceId,
+        parentReview: null,
+        rating: { $exists: true, $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: "$service",
+        averageRating: { $avg: "$rating" },
+      },
+    },
+  ]);
+
+  if (ratingAggregates.length > 0) {
+    const averageRating = parseFloat(
+      ratingAggregates[0].averageRating.toFixed(1)
+    );
+    await Service.findByIdAndUpdate(serviceId, { averageRating });
+  } else {
+    // No ratings yet, reset to 0
+    await Service.findByIdAndUpdate(serviceId, { averageRating: 0 });
+  }
+};
+
 const createReview = async (payload: IReview, userId: string) => {
   if (payload.parentReview) {
     await enforceReviewReplyPermission(userId);
@@ -16,6 +47,9 @@ const createReview = async (payload: IReview, userId: string) => {
     await Review.findByIdAndUpdate(payload.parentReview, {
       $push: { replies: review._id },
     });
+  } else {
+    // Update service average rating after creating a review
+    await updateServiceAverageRating(review.service.toString());
   }
 
   return review;
@@ -49,7 +83,15 @@ const getServiceReviews = async (serviceId: string) => {
 };
 
 const deleteReview = async (id: string) => {
-  return await Review.findByIdAndDelete(id);
+  const review = await Review.findById(id);
+  const deleted = await Review.findByIdAndDelete(id);
+  
+  // Update service average rating after deleting a review
+  if (review && !review.parentReview) {
+    await updateServiceAverageRating(review.service.toString());
+  }
+  
+  return deleted;
 };
 
 export const ReviewServices = {
