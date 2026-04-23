@@ -2,36 +2,8 @@
 import { IReview } from "./review.interface";
 import { Review } from "./review.model";
 import { enforceReviewReplyPermission } from "../../utils/subscriptionHelper/enforceReviewReplyPermission";
-import { Service } from "../service/service.model";
+import { updateServiceAverageRating } from "../../utils/AverageRatingHelper/updateServiceAverageRating";
 
-// ─── Update service average rating ────────────────────────────────────────────
-const updateServiceAverageRating = async (serviceId: string) => {
-  const ratingAggregates = await Review.aggregate([
-    {
-      $match: {
-        service: serviceId,
-        parentReview: null,
-        rating: { $exists: true, $ne: null },
-      },
-    },
-    {
-      $group: {
-        _id: "$service",
-        averageRating: { $avg: "$rating" },
-      },
-    },
-  ]);
-
-  if (ratingAggregates.length > 0) {
-    const averageRating = parseFloat(
-      ratingAggregates[0].averageRating.toFixed(1)
-    );
-    await Service.findByIdAndUpdate(serviceId, { averageRating });
-  } else {
-    // No ratings yet, reset to 0
-    await Service.findByIdAndUpdate(serviceId, { averageRating: 0 });
-  }
-};
 
 const createReview = async (payload: IReview, userId: string) => {
   if (payload.parentReview) {
