@@ -201,6 +201,23 @@ const unblockUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+/**
+ * DELETE /super-admin/users/:userId
+ * Permanently deletes a user account.
+ */
+const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.params as { userId: string };
+
+  await SuperAdminService.deleteUser(userId);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User deleted successfully",
+    data: null,
+  });
+});
+
 /* ================================================================== */
 /*  REVENUE                                                             */
 /* ================================================================== */
@@ -237,5 +254,6 @@ export const SuperAdminController = {
   getUsers,
   blockUser,
   unblockUser,
+  deleteUser,
   getRevenue,
 };

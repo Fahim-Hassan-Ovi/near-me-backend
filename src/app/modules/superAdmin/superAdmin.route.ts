@@ -89,7 +89,7 @@ router.patch(
  * Use with caution — service data cannot be recovered.
  */
 router.delete(
-  "/service-providers/:serviceId/withdraw",
+  "/service-providers/:serviceId",
   checkAuth(Role.SUPER_ADMIN),
   SuperAdminController.withdrawServiceProvider
 );
@@ -127,7 +127,12 @@ router.patch("/users/:userId/block", checkAuth(Role.SUPER_ADMIN), SuperAdminCont
  * Restores a blocked user (isActive = "ACTIVE").
  */
 router.patch("/users/:userId/unblock", checkAuth(Role.SUPER_ADMIN), SuperAdminController.unblockUser);
-
+/**
+ * DELETE /super-admin/users/:userId
+ * Permanently deletes a user account.
+ * Note: Cannot delete super admin users.
+ */
+router.delete("/users/:userId", SuperAdminController.deleteUser);
 /* ================================================================== */
 /*  REVENUE                                                             */
 /* ================================================================== */

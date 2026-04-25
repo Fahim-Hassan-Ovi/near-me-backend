@@ -444,6 +444,17 @@ const unblockUser = async (userId: string): Promise<void> => {
   await User.findByIdAndUpdate(userId, { isActive: IsActive.ACTIVE });
 };
 
+const deleteUser = async (userId: string): Promise<void> => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (user.role === Role.SUPER_ADMIN) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Cannot delete super admin users");
+  }
+  await User.findByIdAndDelete(userId);
+};
+
 /* ================================================================== */
 /*  6. REVENUE                                                          */
 /* ================================================================== */
@@ -597,5 +608,6 @@ export const SuperAdminService = {
   getUsers,
   blockUser,
   unblockUser,
+  deleteUser,
   getRevenueData,
 };
