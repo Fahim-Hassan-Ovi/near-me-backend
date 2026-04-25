@@ -11,7 +11,8 @@ import { StaticPageRoutes } from "../modules/static_pages/static_pages.route"
 import { PlanRoutes } from "../modules/plan/plan.route"
 import { SubscriptionRoutes } from "../modules/subscription/subscription.route"
 import { ServiceAnalyticsRoutes } from "../modules/serviceAnalytics/serviceAnalytics.routes"
-import { paymentRouter } from "../modules/payment/payment.route"
+import { PaymentRouter } from "../modules/payment/payment.route"
+import { SuperAdminRoutes } from "../modules/superAdmin/superAdmin.route"
 
 
 export const router = Router()
@@ -67,7 +68,11 @@ const moduleRoutes = [
   },
   {
     path: "/payments",
-    route: paymentRouter,
+    route: PaymentRouter,
+  },
+  {
+    path: "/super-admin",
+    route: SuperAdminRoutes,
   }
 
 ]
