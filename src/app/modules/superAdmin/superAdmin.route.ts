@@ -6,7 +6,7 @@ import { SuperAdminController } from "./superAdmin.controller";
 const router = Router();
 
 // ── All routes require SUPER_ADMIN auth ───────────────────────────────────────
-router.use(checkAuth(Role.SUPER_ADMIN));
+// router.use(checkAuth(Role.SUPER_ADMIN));
 
 /* ================================================================== */
 /*  DASHBOARD                                                           */
@@ -25,7 +25,7 @@ router.use(checkAuth(Role.SUPER_ADMIN));
  *   platformGrowth: [{ month, providers, revenue }]  // last 7 months
  * }
  */
-router.get("/dashboard", SuperAdminController.getDashboard);
+router.get("/dashboard", checkAuth(Role.SUPER_ADMIN), SuperAdminController.getDashboard);
 
 /* ================================================================== */
 /*  SERVICE PROVIDERS                                                   */
@@ -47,7 +47,7 @@ router.get("/dashboard", SuperAdminController.getDashboard);
  *   counts: { all, pending, paid, onFreeTrial, suspended }
  * }
  */
-router.get("/service-providers", SuperAdminController.getServiceProviders);
+router.get("/service-providers", checkAuth(Role.SUPER_ADMIN), SuperAdminController.getServiceProviders);
 
 /**
  * PATCH /super-admin/service-providers/:serviceId/suspend
@@ -60,7 +60,23 @@ router.get("/service-providers", SuperAdminController.getServiceProviders);
  */
 router.patch(
   "/service-providers/:serviceId/suspend",
+  checkAuth(Role.SUPER_ADMIN),
   SuperAdminController.suspendServiceProvider
+);
+
+/**
+ * PATCH /super-admin/service-providers/:serviceId/unsuspend
+ *
+ * Unsuspends/reactivates the provider:
+ *  - Sets provider user isActive = "ACTIVE"
+ *  - Sets service subscriptionStatus = "active"
+ *
+ * The provider will now appear in public-facing searches again.
+ */
+router.patch(
+  "/service-providers/:serviceId/unsuspend",
+  checkAuth(Role.SUPER_ADMIN),
+  SuperAdminController.unsuspendServiceProvider
 );
 
 /**
@@ -74,6 +90,7 @@ router.patch(
  */
 router.delete(
   "/service-providers/:serviceId/withdraw",
+  checkAuth(Role.SUPER_ADMIN),
   SuperAdminController.withdrawServiceProvider
 );
 
@@ -97,19 +114,19 @@ router.delete(
  *   counts: { total, active, blocked }
  * }
  */
-router.get("/users", SuperAdminController.getUsers);
+router.get("/users", checkAuth(Role.SUPER_ADMIN), SuperAdminController.getUsers);
 
 /**
  * PATCH /super-admin/users/:userId/block
  * Blocks the user (isActive = "BLOCKED").
  */
-router.patch("/users/:userId/block", SuperAdminController.blockUser);
+router.patch("/users/:userId/block", checkAuth(Role.SUPER_ADMIN), SuperAdminController.blockUser);
 
 /**
  * PATCH /super-admin/users/:userId/unblock
  * Restores a blocked user (isActive = "ACTIVE").
  */
-router.patch("/users/:userId/unblock", SuperAdminController.unblockUser);
+router.patch("/users/:userId/unblock", checkAuth(Role.SUPER_ADMIN), SuperAdminController.unblockUser);
 
 /* ================================================================== */
 /*  REVENUE                                                             */
@@ -133,6 +150,6 @@ router.patch("/users/:userId/unblock", SuperAdminController.unblockUser);
  *   }
  * }
  */
-router.get("/revenue", SuperAdminController.getRevenue);
+router.get("/revenue", checkAuth(Role.SUPER_ADMIN), SuperAdminController.getRevenue);
 
 export const SuperAdminRoutes = router;

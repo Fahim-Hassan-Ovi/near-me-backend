@@ -91,6 +91,29 @@ const suspendServiceProvider = catchAsync(
  * DELETE /super-admin/service-providers/:serviceId/withdraw
  * Permanently removes the service and soft-deletes the provider account.
  */
+/**
+ * PATCH /super-admin/service-providers/:serviceId/unsuspend
+ * Unsuspends/reactivates the provider account (unblocks user + reactivates service).
+ */
+const unsuspendServiceProvider = catchAsync(
+  async (req: Request, res: Response) => {
+    const { serviceId } = req.params as { serviceId: string };
+
+    await SuperAdminService.unsuspendServiceProvider(serviceId);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: "Service provider unsuspended successfully",
+      data: null,
+    });
+  }
+);
+
+/**
+ * DELETE /super-admin/service-providers/:serviceId/withdraw
+ * Permanently removes the service and soft-deletes the provider account.
+ */
 const withdrawServiceProvider = catchAsync(
   async (req: Request, res: Response) => {
     const { serviceId } = req.params as { serviceId: string };
@@ -209,6 +232,7 @@ export const SuperAdminController = {
   getDashboard,
   getServiceProviders,
   suspendServiceProvider,
+  unsuspendServiceProvider,
   withdrawServiceProvider,
   getUsers,
   blockUser,

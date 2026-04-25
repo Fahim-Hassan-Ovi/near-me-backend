@@ -317,6 +317,22 @@ const suspendServiceProvider = async (serviceId: string): Promise<void> => {
   ]);
 };
 
+const unsuspendServiceProvider = async (serviceId: string): Promise<void> => {
+  const service = await Service.findById(serviceId);
+  if (!service) {
+    throw new AppError(httpStatus.NOT_FOUND, "Service not found");
+  }
+
+  if (!service.provider) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Service has no provider");
+  }
+
+  await Promise.all([
+    User.findByIdAndUpdate(service.provider, { isActive: IsActive.ACTIVE }),
+    Service.findByIdAndUpdate(serviceId, { subscriptionStatus: "active" }),
+  ]);
+};
+
 const withdrawServiceProvider = async (serviceId: string): Promise<void> => {
   const service = await Service.findById(serviceId);
   if (!service) {
@@ -576,6 +592,7 @@ export const SuperAdminService = {
   getDashboardStats,
   getServiceProviders,
   suspendServiceProvider,
+  unsuspendServiceProvider,
   withdrawServiceProvider,
   getUsers,
   blockUser,
