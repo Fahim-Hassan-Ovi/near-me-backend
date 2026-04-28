@@ -4,7 +4,6 @@
 import { NextFunction, Request, Response } from "express"
 import { envVars } from "../config/env"
 import AppError from "../errorHelpers/AppError";
-import mongoose from "mongoose";
 import { TErrorSources, TGenericErrorResponse } from "../interfaces/error.types";
 import { handleDuplicateError } from "../helpers/handleDuplicateError";
 import { handleCastError } from "../helpers/handleCastError";
@@ -18,15 +17,41 @@ export const globalErrorHandler = async (err: any, req: Request, res: Response, 
     if (envVars.NODE_ENV === "development") {
         console.log(err);
     }
-    console.log({ file: req.files });
-    if (req.file) {
-        await deleteImageFromCLoudinary(req.file.path)
-    }
 
-    if (req.files && Array.isArray(req.files) && req.files.length) {
-        const imageUrls = (req.files as Express.Multer.File[]).map(file => file.path)
+    // Clean up uploaded images on error
+    try {
+        const filesToDelete: string[] = [];
 
-        await Promise.all(imageUrls.map(url => deleteImageFromCLoudinary(url)))
+        // Handle single file (req.file)
+        if (req.file && req.file.path) {
+            filesToDelete.push(req.file.path);
+        }
+
+        // Handle multiple files (req.files) - nested object structure
+        if (req.files && typeof req.files === "object") {
+            const files = req.files as Record<string, Express.Multer.File[]>;
+            
+            Object.values(files).forEach((fileArray) => {
+                if (Array.isArray(fileArray)) {
+                    fileArray.forEach((file) => {
+                        if (file.path) {
+                            filesToDelete.push(file.path);
+                        }
+                    });
+                }
+            });
+        }
+
+        // Delete all collected images in parallel
+        if (filesToDelete.length > 0) {
+            await Promise.all(
+                filesToDelete.map((url) => deleteImageFromCLoudinary(url).catch(() => {
+                    // Silently ignore deletion errors for individual files
+                }))
+            );
+        }
+    } catch (cleanupError: any) {
+        console.log("Error during image cleanup:", cleanupError.message);
     }
 
     let errorSources: TErrorSources[] = [];
