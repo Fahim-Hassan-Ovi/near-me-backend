@@ -44,23 +44,24 @@ const storage = new CloudinaryStorage({
 });
 
 const generateFileName = (file: Express.Multer.File) => {
-  const fileName = file.originalname
+  // Remove extension from original filename first
+  const nameWithoutExt = file.originalname
     .toLowerCase()
+    .replace(/\.[^/.]+$/, ""); // Remove extension using regex
+
+  const fileName = nameWithoutExt
     .replace(/\s+/g, "-")
     .replace(/\./g, "-")
-    .replace(/[^a-z0-9\-\.]/g, "");
-
-  const extension = file.originalname.split(".").pop();
+    .replace(/[^a-z0-9\-]/g, "");
 
   const uniqueFileName =
     Math.random().toString(36).substring(2) +
     "-" +
     Date.now() +
     "-" +
-    fileName +
-    "." +
-    extension;
+    fileName;
 
+  // Return without extension - let Cloudinary add it automatically
   return uniqueFileName;
 };
 

@@ -9,7 +9,7 @@ const router = Router();
 // router.post("/create",  CategoryControllers.createCategory);
 
 router.post("/create",
-    // checkAuth(Role.SUPER_ADMIN),
+    checkAuth(Role.SUPER_ADMIN),
     multerUpload.single("image"),
     CategoryControllers.createCategory);
 

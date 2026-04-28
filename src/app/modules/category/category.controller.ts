@@ -7,7 +7,7 @@ import httpStatus from "http-status-codes";
 import { ICategory } from "./category.interface";
 
 const createCategory = catchAsync(async (req:Request, res: Response, next: NextFunction) => {
-console.log("this is from createCategory:",req.body);
+// console.log("this is from createCategory:",req.body);
   const payload: ICategory = {
     ...req.body,
     image: req.file?.path || ""
