@@ -209,7 +209,7 @@ src
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/your-username/near-me-backend.git
+git clone https://github.com/Fahim-Hassan-Ovi/near-me-backend.git
 cd near-me-backend
 ```
 
@@ -603,33 +603,6 @@ You can deploy this backend to various platforms:
 * **DigitalOcean** - Droplets or App Platform
 * **Heroku** - Platform as a Service
 
-### Docker Deployment (Optional)
-
-Create a `Dockerfile`:
-
-```dockerfile
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY dist ./dist
-
-EXPOSE 5000
-
-CMD ["npm", "start"]
-```
-
-Build and run:
-
-```bash
-docker build -t near-me-backend .
-docker run -p 5000:5000 --env-file .env near-me-backend
-```
-
----
 
 # 🤝 Contributing
 
@@ -641,7 +614,7 @@ We welcome contributions! To contribute:
 
 2. **Clone your fork:**
 ```bash
-git clone https://github.com/your-username/near-me-backend.git
+git clone https://github.com/Fahim-Hassan-Ovi/near-me-backend.git
 cd near-me-backend
 ```
 
@@ -677,25 +650,5 @@ git push origin feature/your-feature-name
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
----
 
-# 🙏 Support
 
-If you encounter any issues or have questions:
-
-1. Check the [existing issues](https://github.com/your-username/near-me-backend/issues)
-2. Create a new issue with a clear description
-3. Provide detailed information about the problem
-4. Include error messages and stack traces if applicable
-
----
-
-# 📞 Contact & Community
-
-* **GitHub Issues** - For bug reports and feature requests
-* **Email** - [your-email@example.com]
-* **Discord Community** - [Community Link]
-
----
-
-**Made with ❤️ by the Near Me Team**
