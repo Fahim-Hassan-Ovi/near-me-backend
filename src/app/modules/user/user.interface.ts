@@ -9,7 +9,7 @@ export enum Role {
 export enum IsActive {
     ACTIVE = "ACTIVE",
     INACTIVE = "INACTIVE",
-    BLOCKED = " BLOCKED"
+    BLOCKED = "BLOCKED"
 }
 
 export interface IAuthProvider {
@@ -35,6 +35,8 @@ export interface IUser {
     _id?: Types.ObjectId;
     name: string;
     email: string;
+    phone?: string;
+    address?: string;
     password?: string;
     picture?: string;
     isDeleted?: boolean;

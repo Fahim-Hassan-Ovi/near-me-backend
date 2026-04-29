@@ -25,6 +25,9 @@ export const createUserZodSchema = z.object({
                 "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
         })
         .optional(),
+    picture: z
+        .string()
+        .optional(),
     role: z
         // .enum(["PROVIDER", "USER", "SUPER_ADMIN"])
         .enum(Object.values(Role) as [string])
@@ -44,9 +47,6 @@ export const createUserZodSchema = z.object({
         .refine(val => typeof val === "boolean" || val === undefined, {
             message: "isVerified must be true or false",
         }),
-    hasService: z
-        .boolean()
-        .optional(),
     address: z.string()
         .min(1, { message: "Address is required" })
         .max(200, { message: "Address cannot exceed 200 characters." })
@@ -82,6 +82,28 @@ export const updateUserZodSchema = z.object({
                 "Phone number must be valid for Bangladesh. Format: +8801XXXXXXXXX or 01XXXXXXXXX",
         })
         .optional(),
+    picture: z
+        .string()
+        .optional(),
+    role: z
+        // .enum(["PROVIDER", "USER", "SUPER_ADMIN"])
+        .enum(Object.values(Role) as [string])
+        .optional(),
+    isActive: z
+        .enum(Object.values(IsActive) as [string])
+        .optional(),
+    isDeleted: z
+        .boolean()
+        .optional()
+        .refine(val => typeof val === "boolean" || val === undefined, {
+            message: "isDeleted must be true or false",
+        }),
+    isVerified: z
+        .boolean()
+        .optional()
+        .refine(val => typeof val === "boolean" || val === undefined, {
+            message: "isVerified must be true or false",
+        }),
     otp: z
         .string("OTP type should be string!")
         .optional(),

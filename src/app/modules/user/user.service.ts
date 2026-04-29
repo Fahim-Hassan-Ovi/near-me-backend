@@ -10,6 +10,7 @@ import { QueryBuilder } from "../../utils/QueryBuilder";
 import { userSearchableFields } from "./user.constant";
 import { randomOTPGenerator } from "../../utils/randomOTPGenerator";
 import { sendEmail } from "../../utils/sendEmail";
+import { deleteImageFromCLoudinary } from "../../config/cloudinary.config";
 
 const createUser = async (payload: Partial<IUser>) => {
 
@@ -213,6 +214,10 @@ const updateUser = async (userId: string, payload: Partial<IUser>, decodedToken:
     }
 
     const newUpdatedUser = await User.findByIdAndUpdate(userId, payload, { new: true, runValidators: true });
+
+    if (payload.picture && ifUserExist.picture) {
+        await deleteImageFromCLoudinary(ifUserExist.picture)
+    }
 
     return newUpdatedUser;
 }

@@ -5,6 +5,7 @@ import { createUserZodSchema, updateUserZodSchema, verifyOtpZodSchema } from "./
 import { validateRequest } from "../../middlewares/validateRequest";
 import { Role } from "./user.interface";
 import { checkAuth } from "../../middlewares/checkAuth";
+import { multerUpload } from "../../config/multer.config";
 
 
 const router = Router();
@@ -22,6 +23,6 @@ router.get("/me", checkAuth(...Object.values(Role)) , UserControllers.getMe);
 
 router.get("/:id", checkAuth(Role.PROVIDER, Role.SUPER_ADMIN), UserControllers.getSingleUser)
 
-router.patch("/:id", validateRequest(updateUserZodSchema), checkAuth(...Object.values(Role)), UserControllers.updateUser)
+router.patch("/:id", checkAuth(...Object.values(Role)), multerUpload.single("picture"),  validateRequest(updateUserZodSchema), UserControllers.updateUser)
 
 export const UserRoutes = router;
